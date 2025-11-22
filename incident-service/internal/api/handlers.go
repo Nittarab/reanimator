@@ -13,31 +13,35 @@ import (
 	"github.com/your-org/ai-sre-platform/incident-service/internal/adapters"
 	"github.com/your-org/ai-sre-platform/incident-service/internal/config"
 	"github.com/your-org/ai-sre-platform/incident-service/internal/database"
+	"github.com/your-org/ai-sre-platform/incident-service/internal/github"
+	"github.com/your-org/ai-sre-platform/incident-service/internal/models"
 )
 
 // Server represents the HTTP server
 type Server struct {
-	config     *config.Config
-	db         *database.DB
-	redis      *database.RedisClient
-	repository *database.IncidentRepository
-	adapters   *adapters.Registry
-	logger     *Logger
-	metrics    *Metrics
-	router     *chi.Mux
+	config       *config.Config
+	db           *database.DB
+	redis        *database.RedisClient
+	repository   *database.IncidentRepository
+	adapters     *adapters.Registry
+	githubClient *github.Client
+	logger       *Logger
+	metrics      *Metrics
+	router       *chi.Mux
 }
 
 // NewServer creates a new HTTP server
-func NewServer(cfg *config.Config, db *database.DB, redis *database.RedisClient) *Server {
+func NewServer(cfg *config.Config, db *database.DB, redis *database.RedisClient, githubClient *github.Client) *Server {
 	s := &Server{
-		config:     cfg,
-		db:         db,
-		redis:      redis,
-		repository: database.NewIncidentRepository(db),
-		adapters:   adapters.NewRegistry(),
-		logger:     NewLogger(),
-		metrics:    NewMetrics(),
-		router:     chi.NewRouter(),
+		config:       cfg,
+		db:           db,
+		redis:        redis,
+		repository:   database.NewIncidentRepository(db),
+		adapters:     adapters.NewRegistry(),
+		githubClient: githubClient,
+		logger:       NewLogger(),
+		metrics:      NewMetrics(),
+		router:       chi.NewRouter(),
 	}
 
 	s.setupRoutes()
@@ -58,6 +62,9 @@ func (s *Server) setupRoutes() {
 	// Incident endpoints (to be implemented in later tasks)
 	s.router.Get("/api/v1/incidents", s.handleListIncidents)
 	s.router.Get("/api/v1/incidents/{id}", s.handleGetIncident)
+
+	// Workflow status webhook endpoint
+	s.router.Post("/api/v1/webhooks/workflow-status", s.handleWorkflowStatus)
 }
 
 // handleHealth handles health check requests
@@ -234,5 +241,202 @@ func (s *Server) handleWebhook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":      "accepted",
 		"incident_id": incident.ID,
+	})
+}
+
+// WorkflowStatusPayload represents the payload from GitHub Actions workflow completion
+type WorkflowStatusPayload struct {
+	IncidentID     string `json:"incident_id"`
+	Status         string `json:"status"` // "success", "failed", "no_fix_needed"
+	PullRequestURL string `json:"pr_url,omitempty"`
+	Diagnosis      string `json:"diagnosis,omitempty"`
+	Repository     string `json:"repository"`
+}
+
+// handleWorkflowStatus handles workflow completion webhooks from GitHub Actions
+func (s *Server) handleWorkflowStatus(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	// Parse request body
+	var payload WorkflowStatusPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		s.logger.Error("failed to parse workflow status payload", map[string]interface{}{
+			"error": err.Error(),
+		})
+		http.Error(w, "invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if payload.IncidentID == "" || payload.Status == "" || payload.Repository == "" {
+		s.logger.Error("missing required fields in workflow status payload", map[string]interface{}{
+			"incident_id": payload.IncidentID,
+			"status":      payload.Status,
+			"repository":  payload.Repository,
+		})
+		http.Error(w, "missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	// Get the incident
+	incident, err := s.repository.GetByID(payload.IncidentID)
+	if err != nil {
+		s.logger.Error("failed to get incident for workflow status update", map[string]interface{}{
+			"error":       err.Error(),
+			"incident_id": payload.IncidentID,
+		})
+		http.Error(w, "incident not found", http.StatusNotFound)
+		return
+	}
+
+	// Update incident based on workflow status
+	now := time.Now()
+	incident.CompletedAt = &now
+
+	switch payload.Status {
+	case "success":
+		if payload.PullRequestURL != "" {
+			incident.Status = models.StatusPRCreated
+			incident.PullRequestURL = &payload.PullRequestURL
+		} else {
+			incident.Status = models.StatusNoFixNeeded
+		}
+	case "failed":
+		incident.Status = models.StatusFailed
+	case "no_fix_needed":
+		incident.Status = models.StatusNoFixNeeded
+	default:
+		s.logger.Error("unknown workflow status", map[string]interface{}{
+			"status":      payload.Status,
+			"incident_id": payload.IncidentID,
+		})
+		http.Error(w, "unknown status", http.StatusBadRequest)
+		return
+	}
+
+	// Update diagnosis if provided
+	if payload.Diagnosis != "" {
+		incident.Diagnosis = &payload.Diagnosis
+	}
+
+	// Update the incident in the database
+	if err := s.repository.Update(incident); err != nil {
+		s.logger.Error("failed to update incident after workflow completion", map[string]interface{}{
+			"error":       err.Error(),
+			"incident_id": payload.IncidentID,
+		})
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Log the workflow completion event
+	eventType := models.EventPRCreated
+	if payload.Status == "failed" {
+		eventType = models.EventIncidentFailed
+	}
+
+	event := &models.IncidentEvent{
+		IncidentID: payload.IncidentID,
+		EventType:  eventType,
+		EventData: map[string]interface{}{
+			"status":          payload.Status,
+			"pull_request_url": payload.PullRequestURL,
+			"diagnosis":       payload.Diagnosis,
+		},
+	}
+
+	if err := s.repository.LogEvent(event); err != nil {
+		s.logger.Error("failed to log workflow completion event", map[string]interface{}{
+			"error":       err.Error(),
+			"incident_id": payload.IncidentID,
+		})
+		// Don't fail the request if event logging fails
+	}
+
+	// Process queued incidents for this repository
+	nextIncident := s.githubClient.DecrementActive(payload.Repository)
+	if nextIncident != nil {
+		s.logger.Info("processing queued incident", map[string]interface{}{
+			"incident_id": nextIncident.ID,
+			"repository":  nextIncident.Repository,
+		})
+
+		// Log dequeue event
+		dequeueEvent := &models.IncidentEvent{
+			IncidentID: nextIncident.ID,
+			EventType:  models.EventDequeuedForRemediation,
+			EventData: map[string]interface{}{
+				"repository": nextIncident.Repository,
+			},
+		}
+		if err := s.repository.LogEvent(dequeueEvent); err != nil {
+			s.logger.Error("failed to log dequeue event", map[string]interface{}{
+				"error":       err.Error(),
+				"incident_id": nextIncident.ID,
+			})
+		}
+
+		// Trigger workflow for the queued incident
+		go func(inc *models.Incident) {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			// Get the branch from config (default to "main")
+			branch := "main"
+			if s.config != nil && s.config.ServiceMappings != nil {
+				for _, mapping := range s.config.ServiceMappings {
+					if mapping.Repository == inc.Repository {
+						branch = mapping.Branch
+						break
+					}
+				}
+			}
+
+			_, err := s.githubClient.DispatchWorkflow(ctx, inc, branch)
+			if err != nil {
+				s.logger.Error("failed to dispatch workflow for queued incident", map[string]interface{}{
+					"error":       err.Error(),
+					"incident_id": inc.ID,
+					"repository":  inc.Repository,
+				})
+
+				// Update incident status to failed
+				if updateErr := s.repository.UpdateStatus(inc.ID, models.StatusFailed); updateErr != nil {
+					s.logger.Error("failed to update queued incident status", map[string]interface{}{
+						"error":       updateErr.Error(),
+						"incident_id": inc.ID,
+					})
+				}
+				return
+			}
+
+			// Update incident status to workflow_triggered
+			triggerTime := time.Now()
+			inc.TriggeredAt = &triggerTime
+			inc.Status = models.StatusWorkflowTriggered
+			if updateErr := s.repository.Update(inc); updateErr != nil {
+				s.logger.Error("failed to update queued incident after dispatch", map[string]interface{}{
+					"error":       updateErr.Error(),
+					"incident_id": inc.ID,
+				})
+			}
+		}(nextIncident)
+	}
+
+	// Log success
+	s.logger.Info("workflow status updated", map[string]interface{}{
+		"incident_id":      payload.IncidentID,
+		"status":           payload.Status,
+		"pull_request_url": payload.PullRequestURL,
+		"repository":       payload.Repository,
+		"duration_ms":      time.Since(startTime).Milliseconds(),
+	})
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "updated",
+		"message": "incident status updated successfully",
 	})
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/your-org/ai-sre-platform/incident-service/internal/api"
 	"github.com/your-org/ai-sre-platform/incident-service/internal/config"
 	"github.com/your-org/ai-sre-platform/incident-service/internal/database"
+	"github.com/your-org/ai-sre-platform/incident-service/internal/github"
 )
 
 func main() {
@@ -43,8 +44,16 @@ func main() {
 	}
 	defer redis.Close()
 
+	// Create GitHub client
+	githubClient := github.NewClient(
+		cfg.GitHub.APIURL,
+		cfg.GitHub.Token,
+		cfg.GitHub.WorkflowName,
+		cfg.Concurrency.MaxWorkflowsPerRepo,
+	)
+
 	// Create server
-	server := api.NewServer(cfg, db, redis)
+	server := api.NewServer(cfg, db, redis, githubClient)
 	logger := server.Logger()
 
 	// Log startup
