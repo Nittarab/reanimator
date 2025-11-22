@@ -209,3 +209,72 @@ func (r *IncidentRepository) List() ([]*models.Incident, error) {
 
 	return incidents, nil
 }
+
+// FindDuplicateIncident finds an existing incident with the same service and error within the time window
+func (r *IncidentRepository) FindDuplicateIncident(serviceName, errorMessage string, timeWindow time.Duration) (*models.Incident, error) {
+	query := `
+		SELECT 
+			id, service_name, repository, error_message, stack_trace,
+			severity, status, provider, provider_data, workflow_run_id,
+			pull_request_url, diagnosis, created_at, updated_at,
+			triggered_at, completed_at
+		FROM incidents
+		WHERE service_name = $1 
+		  AND error_message = $2
+		  AND created_at > $3
+		ORDER BY created_at DESC
+		LIMIT 1
+	`
+
+	cutoffTime := time.Now().Add(-timeWindow)
+	var incident models.Incident
+	var providerDataJSON []byte
+
+	err := r.db.QueryRow(query, serviceName, errorMessage, cutoffTime).Scan(
+		&incident.ID,
+		&incident.ServiceName,
+		&incident.Repository,
+		&incident.ErrorMessage,
+		&incident.StackTrace,
+		&incident.Severity,
+		&incident.Status,
+		&incident.Provider,
+		&providerDataJSON,
+		&incident.WorkflowRunID,
+		&incident.PullRequestURL,
+		&incident.Diagnosis,
+		&incident.CreatedAt,
+		&incident.UpdatedAt,
+		&incident.TriggeredAt,
+		&incident.CompletedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil // No duplicate found
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to find duplicate incident: %w", err)
+	}
+
+	if err := json.Unmarshal(providerDataJSON, &incident.ProviderData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal provider data: %w", err)
+	}
+
+	return &incident, nil
+}
+
+// UpdateStatus updates the status of an incident
+func (r *IncidentRepository) UpdateStatus(id string, status models.IncidentStatus) error {
+	query := `
+		UPDATE incidents
+		SET status = $2, updated_at = $3
+		WHERE id = $1
+	`
+
+	_, err := r.db.Exec(query, id, status, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to update incident status: %w", err)
+	}
+
+	return nil
+}
