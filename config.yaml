@@ -4,28 +4,23 @@ server:
   write_timeout: 30s
 
 database:
-  host: postgres
-  port: 5432
-  database: ai_sre
-  ssl_mode: disable
+  host: ${DATABASE_HOST:-localhost}
+  port: ${DATABASE_PORT:-5432}
+  database: ${DATABASE_NAME:-ai_sre}
+  user: ${DATABASE_USER:-postgres}
+  password: ${DATABASE_PASSWORD:-postgres}
+  ssl_mode: ${DATABASE_SSL_MODE:-disable}
 
 redis:
-  url: redis://redis:6379
+  host: ${REDIS_HOST:-localhost}
+  port: ${REDIS_PORT:-6379}
+  password: ${REDIS_PASSWORD:-}
+  db: ${REDIS_DB:-0}
 
 github:
-  api_url: https://api.github.com
+  api_url: ${GITHUB_API_URL:-https://api.github.com}
+  token: ${GITHUB_TOKEN}
   workflow_name: remediate-incident.yml
-
-service_mappings:
-  - service_name: api-gateway
-    repository: org/api-gateway
-    branch: main
-  - service_name: user-service
-    repository: org/user-service
-    branch: main
-  - service_name: payment-service
-    repository: org/payment-service
-    branch: main
 
 deduplication:
   time_window: 5m
@@ -33,9 +28,4 @@ deduplication:
 concurrency:
   max_workflows_per_repo: 2
 
-mcp_servers:
-  - name: datadog
-    type: datadog
-    config:
-      api_key_env: DATADOG_API_KEY
-      app_key_env: DATADOG_APP_KEY
+mcp_servers: []
