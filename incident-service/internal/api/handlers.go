@@ -119,8 +119,14 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Return response in the format expected by the dashboard
+	response := map[string]interface{}{
+		"incidents": incidents,
+		"total":     len(incidents),
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(incidents)
+	json.NewEncoder(w).Encode(response)
 }
 
 // handleGetIncident handles getting a single incident (placeholder)
