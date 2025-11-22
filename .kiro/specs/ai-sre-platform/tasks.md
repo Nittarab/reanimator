@@ -54,7 +54,7 @@
   - **Property 5: Deduplication within time window**
   - **Validates: Requirements 2.3**
 
-- [ ] 5. Implement GitHub workflow dispatch integration
+- [x] 5. Implement GitHub workflow dispatch integration
   - Create GitHub API client for workflow dispatch
   - Implement workflow trigger logic with incident context
   - Implement retry logic with exponential backoff
@@ -62,15 +62,15 @@
   - Implement incident queueing system
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 5.1 Write property test for workflow context completeness
+- [x] 5.1 Write property test for workflow context completeness
   - **Property 6: Workflow dispatch includes required context**
   - **Validates: Requirements 3.2**
 
-- [ ] 5.2 Write property test for retry logic
+- [x] 5.2 Write property test for retry logic
   - **Property 7: Retry with exponential backoff**
   - **Validates: Requirements 3.3**
 
-- [ ] 5.3 Write property test for concurrency enforcement
+- [x] 5.3 Write property test for concurrency enforcement
   - **Property 8: Concurrency limit enforcement**
   - **Validates: Requirements 3.4, 12.2, 12.3**
 
