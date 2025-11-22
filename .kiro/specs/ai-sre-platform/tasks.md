@@ -232,7 +232,7 @@
 - [x] 20. Checkpoint - Ensure all GitHub Action tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 20.1 Create act-based integration tests for remediation workflow
+- [-] 20.1 Create act-based integration tests for remediation workflow
   - Install nektos/act for local GitHub Actions testing
   - Create test fixtures directory with sample incident events
   - Create test repository fixture with intentionally buggy code
