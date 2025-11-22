@@ -17,7 +17,7 @@
   - Set up structured logging
   - _Requirements: 9.3, 9.4, 13.1, 13.3, 13.4, 13.5_
 
-- [ ]* 2.1 Write property test for database connection resilience
+- [ ] 2.1 Write property test for database connection resilience
   - **Property 1: Incident persistence round-trip**
   - **Validates: Requirements 1.5**
 
@@ -30,11 +30,11 @@
   - Create adapter registry and routing logic
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ]* 3.1 Write property test for provider transformation
+- [ ] 3.1 Write property test for provider transformation
   - **Property 2: Provider format transformation**
   - **Validates: Requirements 1.2**
 
-- [ ]* 3.2 Write property test for malformed data handling
+- [ ] 3.2 Write property test for malformed data handling
   - **Property 3: Malformed data error handling**
   - **Validates: Requirements 1.4**
 
@@ -46,11 +46,11 @@
   - Implement incident status state machine
   - _Requirements: 1.5, 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ]* 4.1 Write property test for service lookup consistency
+- [ ] 4.1 Write property test for service lookup consistency
   - **Property 4: Service-to-repository lookup consistency**
   - **Validates: Requirements 2.2**
 
-- [ ]* 4.2 Write property test for deduplication
+- [ ] 4.2 Write property test for deduplication
   - **Property 5: Deduplication within time window**
   - **Validates: Requirements 2.3**
 
@@ -62,15 +62,15 @@
   - Implement incident queueing system
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ]* 5.1 Write property test for workflow context completeness
+- [ ] 5.1 Write property test for workflow context completeness
   - **Property 6: Workflow dispatch includes required context**
   - **Validates: Requirements 3.2**
 
-- [ ]* 5.2 Write property test for retry logic
+- [ ] 5.2 Write property test for retry logic
   - **Property 7: Retry with exponential backoff**
   - **Validates: Requirements 3.3**
 
-- [ ]* 5.3 Write property test for concurrency enforcement
+- [ ] 5.3 Write property test for concurrency enforcement
   - **Property 8: Concurrency limit enforcement**
   - **Validates: Requirements 3.4, 12.2, 12.3**
 
@@ -82,11 +82,11 @@
   - Implement configuration hot-reloading
   - _Requirements: 11.1, 11.2, 11.4, 16.1, 22.1_
 
-- [ ]* 6.1 Write property test for configuration parsing
+- [ ] 6.1 Write property test for configuration parsing
   - **Property 11: Configuration parsing validity**
   - **Validates: Requirements 11.1, 11.2, 22.1**
 
-- [ ]* 6.2 Write property test for rule syntax validation
+- [ ] 6.2 Write property test for rule syntax validation
   - **Property 17: Rule syntax validation**
   - **Validates: Requirements 16.5**
 
@@ -97,7 +97,7 @@
   - Implement rule validation
   - _Requirements: 16.2, 16.3, 16.4, 16.5_
 
-- [ ]* 7.1 Write property test for rule evaluation
+- [ ] 7.1 Write property test for rule evaluation
   - **Property 16: Custom rule evaluation**
   - **Validates: Requirements 16.2, 16.3**
 
@@ -109,15 +109,15 @@
   - Implement data retention policy
   - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 20.3_
 
-- [ ]* 8.1 Write property test for audit completeness
+- [ ] 8.1 Write property test for audit completeness
   - **Property 13: Audit trail completeness**
   - **Validates: Requirements 14.1, 20.3**
 
-- [ ]* 8.2 Write property test for filtering correctness
+- [ ] 8.2 Write property test for filtering correctness
   - **Property 14: Incident filtering correctness**
   - **Validates: Requirements 14.3, 19.5**
 
-- [ ]* 8.3 Write property test for statistics accuracy
+- [ ] 8.3 Write property test for statistics accuracy
   - **Property 15: Statistics computation accuracy**
   - **Validates: Requirements 14.4**
 
@@ -128,11 +128,11 @@
   - Create workflow input formatter for MCP configs
   - _Requirements: 22.1, 22.2, 22.3, 22.4_
 
-- [ ]* 9.1 Write property test for MCP config merging
+- [ ] 9.1 Write property test for MCP config merging
   - **Property 18: MCP configuration merging**
   - **Validates: Requirements 22.3**
 
-- [ ]* 9.2 Write property test for credential encryption
+- [ ] 9.2 Write property test for credential encryption
   - **Property 19: MCP credential encryption**
   - **Validates: Requirements 22.4**
 
@@ -143,7 +143,7 @@
   - Store PR URL and diagnosis in incident record
   - _Requirements: 12.5_
 
-- [ ]* 10.1 Write property test for queue processing
+- [ ] 10.1 Write property test for queue processing
   - **Property 12: Workflow completion updates queue**
   - **Validates: Requirements 12.5**
 
@@ -166,11 +166,11 @@
   - Display incident status, service, error message, repository
   - _Requirements: 19.1, 19.2, 19.5_
 
-- [ ]* 13.1 Write property test for incident ordering
+- [ ] 13.1 Write property test for incident ordering
   - **Property 21: Dashboard incident ordering**
   - **Validates: Requirements 19.1**
 
-- [ ]* 13.2 Write property test for incident display completeness
+- [ ] 13.2 Write property test for incident display completeness
   - **Property 22: Dashboard incident display completeness**
   - **Validates: Requirements 19.2**
 
@@ -208,11 +208,11 @@
   - Implement post-mortem generation
   - _Requirements: 4.4, 4.5, 8.1, 8.2, 8.3, 8.4, 8.5, 18.3, 18.5_
 
-- [ ]* 18.1 Write property test for branch naming
+- [ ] 18.1 Write property test for branch naming
   - **Property 9: Branch naming includes incident ID**
   - **Validates: Requirements 8.1**
 
-- [ ]* 18.2 Write property test for post-mortem completeness
+- [ ] 18.2 Write property test for post-mortem completeness
   - **Property 10: Post-mortem completeness**
   - **Validates: Requirements 8.4, 8.5**
 
@@ -223,7 +223,7 @@
   - Include incident severity, service, and PR link in notifications
   - _Requirements: 23.2, 23.3, 23.4, 23.5_
 
-- [ ]* 19.1 Write property test for notification content
+- [ ] 19.1 Write property test for notification content
   - **Property 20: Notification content completeness**
   - **Validates: Requirements 23.5**
 
