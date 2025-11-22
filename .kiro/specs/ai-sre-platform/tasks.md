@@ -185,7 +185,7 @@
   - Ask the user to review the running application and provide feedback
   - _Requirements: Development Environment Setup_
 
-- [ ] 16. Build Remediation GitHub Action
+- [x] 16. Build Remediation GitHub Action
   - Set up TypeScript project for GitHub Action
   - Define action.yml with inputs and outputs
   - Implement Kiro CLI installation logic
@@ -194,7 +194,7 @@
   - Implement incident context file creation
   - _Requirements: 18.1, 18.2, 18.4, 22.1, 22.2, 22.3_
 
-- [ ] 17. Implement remediation workflow logic
+- [x] 17. Implement remediation workflow logic
   - Implement Kiro CLI invocation with remediation prompt
   - Implement branch creation with incident ID in name
   - Implement git commit and push logic
@@ -203,33 +203,33 @@
   - Implement secret masking for MCP credentials in logs
   - _Requirements: 4.4, 4.5, 8.1, 8.2, 8.3, 8.4, 8.5, 18.3, 18.5, 22.4_
 
-- [ ] 17.1 Write property test for branch naming
+- [x] 17.1 Write property test for branch naming
   - **Property 9: Branch naming includes incident ID**
   - **Validates: Requirements 8.1**
 
-- [ ] 17.2 Write property test for post-mortem completeness
+- [x] 17.2 Write property test for post-mortem completeness
   - **Property 10: Post-mortem completeness**
   - **Validates: Requirements 8.4, 8.5**
 
-- [ ] 18. Implement notification system in action
+- [x] 18. Implement notification system in action
   - Implement Slack notification integration
   - Implement custom webhook notifications
   - Implement notification error handling
   - Include incident severity, service, and PR link in notifications
   - _Requirements: 23.2, 23.3, 23.4, 23.5_
 
-- [ ] 18.1 Write property test for notification content
+- [x] 18.1 Write property test for notification content
   - **Property 18: Notification content completeness**
   - **Validates: Requirements 23.5**
 
-- [ ] 19. Implement status reporting back to Incident Service
+- [x] 19. Implement status reporting back to Incident Service
   - Implement webhook call to Incident Service on completion
   - Send PR URL and remediation status
   - Send diagnosis summary
   - Handle network failures gracefully
   - _Requirements: 18.5_
 
-- [ ] 20. Checkpoint - Ensure all GitHub Action tests pass
+- [x] 20. Checkpoint - Ensure all GitHub Action tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 21. Build Demo Application
