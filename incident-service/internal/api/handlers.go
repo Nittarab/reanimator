@@ -65,6 +65,9 @@ func (s *Server) setupRoutes() {
 
 	// Workflow status webhook endpoint
 	s.router.Post("/api/v1/webhooks/workflow-status", s.handleWorkflowStatus)
+
+	// Configuration endpoint
+	s.router.Get("/api/v1/config", s.handleGetConfig)
 }
 
 // handleHealth handles health check requests
@@ -439,4 +442,36 @@ func (s *Server) handleWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 		"status":  "updated",
 		"message": "incident status updated successfully",
 	})
+}
+
+// ConfigResponse represents the configuration data returned to the dashboard
+type ConfigResponse struct {
+	ServiceMappings []ServiceMappingResponse `json:"service_mappings"`
+}
+
+// ServiceMappingResponse represents a service-to-repository mapping
+type ServiceMappingResponse struct {
+	ServiceName string `json:"service_name"`
+	Repository  string `json:"repository"`
+	Branch      string `json:"branch"`
+}
+
+// handleGetConfig handles requests for configuration data
+func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
+	// Build response from current configuration
+	response := ConfigResponse{
+		ServiceMappings: make([]ServiceMappingResponse, 0, len(s.config.ServiceMappings)),
+	}
+
+	for _, mapping := range s.config.ServiceMappings {
+		response.ServiceMappings = append(response.ServiceMappings, ServiceMappingResponse{
+			ServiceName: mapping.ServiceName,
+			Repository:  mapping.Repository,
+			Branch:      mapping.Branch,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }

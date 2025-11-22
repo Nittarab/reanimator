@@ -142,7 +142,7 @@
   - Implement routing with React Router
   - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
 
-- [ ] 12. Implement Dashboard incident list view
+- [x] 12. Implement Dashboard incident list view
   - Create incident list table component
   - Implement real-time updates with polling
   - Implement filtering by status, service, repository, time range
@@ -150,15 +150,15 @@
   - Display incident status, service, error message, repository
   - _Requirements: 19.1, 19.2, 19.5_
 
-- [ ] 12.1 Write property test for incident ordering
+- [x] 12.1 Write property test for incident ordering
   - **Property 19: Dashboard incident ordering**
   - **Validates: Requirements 19.1**
 
-- [ ] 12.2 Write property test for incident display completeness
+- [x] 12.2 Write property test for incident display completeness
   - **Property 20: Dashboard incident display completeness**
   - **Validates: Requirements 19.2**
 
-- [ ] 13. Implement Dashboard incident detail view
+- [x] 13. Implement Dashboard incident detail view
   - Create incident detail page component
   - Display full incident data including stack trace
   - Display incident timeline with all events
@@ -167,7 +167,7 @@
   - Handle trigger button state (disabled when workflow active)
   - _Requirements: 20.1, 20.2, 20.4, 20.5_
 
-- [ ] 14. Implement Dashboard configuration view
+- [x] 14. Implement Dashboard configuration view
   - Create configuration display page
   - Display service-to-repository mappings
   - _Requirements: 11.1, 11.2_

@@ -278,3 +278,148 @@ func TestHandleWorkflowStatus_InvalidPayload(t *testing.T) {
 		})
 	}
 }
+
+// TestHandleGetConfig tests the configuration endpoint
+func TestHandleGetConfig(t *testing.T) {
+	// Create test configuration with service mappings
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Port:         8080,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+		},
+		GitHub: config.GitHubConfig{
+			APIURL:       "https://api.github.com",
+			Token:        "test-token",
+			WorkflowName: "test-workflow.yml",
+		},
+		ServiceMappings: []config.ServiceMapping{
+			{
+				ServiceName: "api-gateway",
+				Repository:  "test-org/api-gateway",
+				Branch:      "main",
+			},
+			{
+				ServiceName: "user-service",
+				Repository:  "test-org/user-service",
+				Branch:      "develop",
+			},
+		},
+	}
+
+	// Create GitHub client
+	githubClient := github.NewClient(
+		cfg.GitHub.APIURL,
+		cfg.GitHub.Token,
+		cfg.GitHub.WorkflowName,
+		2,
+	)
+
+	// Create server (without database/redis/metrics for this test)
+	server := &Server{
+		config:       cfg,
+		githubClient: githubClient,
+		logger:       NewLogger(),
+	}
+
+	// Create request
+	req := httptest.NewRequest("GET", "/api/v1/config", nil)
+	w := httptest.NewRecorder()
+
+	// Call the handler
+	server.handleGetConfig(w, req)
+
+	// Check response status
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// Parse response
+	var response ConfigResponse
+	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	// Verify service mappings
+	if len(response.ServiceMappings) != 2 {
+		t.Errorf("expected 2 service mappings, got %d", len(response.ServiceMappings))
+	}
+
+	// Check first mapping
+	if response.ServiceMappings[0].ServiceName != "api-gateway" {
+		t.Errorf("expected service name 'api-gateway', got '%s'", response.ServiceMappings[0].ServiceName)
+	}
+	if response.ServiceMappings[0].Repository != "test-org/api-gateway" {
+		t.Errorf("expected repository 'test-org/api-gateway', got '%s'", response.ServiceMappings[0].Repository)
+	}
+	if response.ServiceMappings[0].Branch != "main" {
+		t.Errorf("expected branch 'main', got '%s'", response.ServiceMappings[0].Branch)
+	}
+
+	// Check second mapping
+	if response.ServiceMappings[1].ServiceName != "user-service" {
+		t.Errorf("expected service name 'user-service', got '%s'", response.ServiceMappings[1].ServiceName)
+	}
+	if response.ServiceMappings[1].Repository != "test-org/user-service" {
+		t.Errorf("expected repository 'test-org/user-service', got '%s'", response.ServiceMappings[1].Repository)
+	}
+	if response.ServiceMappings[1].Branch != "develop" {
+		t.Errorf("expected branch 'develop', got '%s'", response.ServiceMappings[1].Branch)
+	}
+}
+
+// TestHandleGetConfig_EmptyMappings tests the configuration endpoint with no service mappings
+func TestHandleGetConfig_EmptyMappings(t *testing.T) {
+	// Create test configuration with no service mappings
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Port:         8080,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+		},
+		GitHub: config.GitHubConfig{
+			APIURL:       "https://api.github.com",
+			Token:        "test-token",
+			WorkflowName: "test-workflow.yml",
+		},
+		ServiceMappings: []config.ServiceMapping{},
+	}
+
+	// Create GitHub client
+	githubClient := github.NewClient(
+		cfg.GitHub.APIURL,
+		cfg.GitHub.Token,
+		cfg.GitHub.WorkflowName,
+		2,
+	)
+
+	// Create server (without metrics for this test)
+	server := &Server{
+		config:       cfg,
+		githubClient: githubClient,
+		logger:       NewLogger(),
+	}
+
+	// Create request
+	req := httptest.NewRequest("GET", "/api/v1/config", nil)
+	w := httptest.NewRecorder()
+
+	// Call the handler
+	server.handleGetConfig(w, req)
+
+	// Check response status
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// Parse response
+	var response ConfigResponse
+	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	// Verify empty service mappings
+	if len(response.ServiceMappings) != 0 {
+		t.Errorf("expected 0 service mappings, got %d", len(response.ServiceMappings))
+	}
+}
