@@ -7,17 +7,34 @@ import (
 
 // Metrics holds all Prometheus metrics
 type Metrics struct {
-	IncidentIngestionTotal   *prometheus.CounterVec
-	IncidentIngestionLatency *prometheus.HistogramVec
-	WorkflowDispatchTotal    *prometheus.CounterVec
-	WorkflowDispatchLatency  *prometheus.HistogramVec
-	IncidentQueueDepth       prometheus.Gauge
-	ActiveWorkflows          *prometheus.GaugeVec
+	IncidentReceived            *prometheus.CounterVec
+	WebhookProcessingDuration   *prometheus.HistogramVec
+	IncidentIngestionTotal      *prometheus.CounterVec
+	IncidentIngestionLatency    *prometheus.HistogramVec
+	WorkflowDispatchTotal       *prometheus.CounterVec
+	WorkflowDispatchLatency     *prometheus.HistogramVec
+	IncidentQueueDepth          prometheus.Gauge
+	ActiveWorkflows             *prometheus.GaugeVec
 }
 
 // NewMetrics creates and registers Prometheus metrics
 func NewMetrics() *Metrics {
 	return &Metrics{
+		IncidentReceived: promauto.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "incident_received_total",
+				Help: "Total number of incidents received from webhooks",
+			},
+			[]string{"provider", "status"},
+		),
+		WebhookProcessingDuration: promauto.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "webhook_processing_duration_seconds",
+				Help:    "Duration of webhook processing",
+				Buckets: []float64{0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0},
+			},
+			[]string{"provider"},
+		),
 		IncidentIngestionTotal: promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "incident_ingestion_total",
