@@ -8,7 +8,7 @@
   - Create quick start scripts (dev.sh, prod.sh, test.sh)
   - _Requirements: 9.1, 10.1, 10.3, 10.4_
 
-- [ ] 2. Implement Incident Service core infrastructure
+- [x] 2. Implement Incident Service core infrastructure
   - Set up Go project with Chi router
   - Configure PostgreSQL database connection with migrations
   - Configure Redis connection for caching
@@ -17,7 +17,7 @@
   - Set up structured logging
   - _Requirements: 9.3, 9.4, 13.1, 13.3, 13.4, 13.5_
 
-- [ ] 2.1 Write property test for database connection resilience
+- [x] 2.1 Write property test for database connection resilience
   - **Property 1: Incident persistence round-trip**
   - **Validates: Requirements 1.5**
 
