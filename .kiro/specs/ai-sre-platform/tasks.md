@@ -21,7 +21,7 @@
   - **Property 1: Incident persistence round-trip**
   - **Validates: Requirements 1.5**
 
-- [ ] 3. Implement webhook adapter system
+- [x] 3. Implement webhook adapter system
   - Create WebhookAdapter interface
   - Implement Datadog webhook adapter with signature validation
   - Implement PagerDuty webhook adapter with signature validation
@@ -30,11 +30,11 @@
   - Create adapter registry and routing logic
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 3.1 Write property test for provider transformation
+- [x] 3.1 Write property test for provider transformation
   - **Property 2: Provider format transformation**
   - **Validates: Requirements 1.2**
 
-- [ ] 3.2 Write property test for malformed data handling
+- [x] 3.2 Write property test for malformed data handling
   - **Property 3: Malformed data error handling**
   - **Validates: Requirements 1.4**
 
