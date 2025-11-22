@@ -8,48 +8,48 @@ inclusion: always
 
 **Stack**: Go 1.21+, Chi router, PostgreSQL 15+, Redis 7+
 
-**Code Style**:
-- Always use `fmt.Errorf("context: %w", err)` to wrap errors with context
-- HTTP handlers: set Content-Type, write status code, then encode JSON response
-- Use `context.Context` for cancellation and timeouts in all I/O operations
-- Run tests with race detector: `go test -v -race ./...`
+**Critical Patterns**:
+- Error wrapping: `fmt.Errorf("context: %w", err)` for all errors
+- HTTP handlers: set Content-Type → write status → encode JSON
+- Always pass `context.Context` for I/O operations (cancellation/timeouts)
+- All database queries through `Repository` interface (enables mocking)
+- Test with race detector: `go test -v -race ./...`
 
 **Testing**:
-- Standard `testing` package for unit tests
-- `gopter` for property-based tests (suffix: `*_property_test.go`)
-- Property tests must run minimum 100 iterations
-- Mark properties with comments: `// Property: description`
-- Test naming: `func TestFunctionName_Scenario(t *testing.T)`
+- Unit tests: standard `testing` package, naming `TestFunctionName_Scenario`
+- Property tests: `gopter` library, suffix `*_property_test.go`, min 100 iterations
+- Mark properties: `// Property: description of invariant`
+- Colocate tests with source files
 
 **Database**:
-- Use PostgreSQL JSON columns for flexible data (e.g., incident metadata)
-- All queries through Repository interface for testability
-- Migrations in `migrations/` numbered sequentially: `001_`, `002_`, etc.
-- Run migrations: `go run cmd/migrate/main.go`
+- PostgreSQL JSON columns for flexible metadata
+- Migrations: `migrations/001_description.sql` (sequential numbering)
+- Run: `go run cmd/migrate/main.go`
 
-**Dependencies**:
-- Chi for routing (lightweight, idiomatic)
-- `lib/pq` for PostgreSQL driver
-- `go-redis` for Redis client
-- Avoid heavy frameworks; prefer standard library
+**Dependencies**: Chi (routing), lib/pq (PostgreSQL), go-redis (Redis). Prefer stdlib over frameworks.
 
 ## TypeScript/React (dashboard/)
 
 **Stack**: React 18, TypeScript, Vite, TanStack Query, shadcn/ui, Tailwind CSS
 
-**Code Style**:
-- Use `@/` path alias for imports from `src/`
-- Functional components with TypeScript interfaces for props
-- TanStack Query for all data fetching (no manual fetch in components)
-- shadcn/ui components for consistent UI (in `src/components/ui/`)
+**Critical Patterns**:
+- Imports: use `@/` alias for `src/` paths
+- Components: functional with TypeScript interfaces for props
+- Data fetching: TanStack Query only (no manual fetch)
+- UI: shadcn/ui components in `src/components/ui/`
 
-**Testing**:
-- Vitest + React Testing Library for component tests
-- `fast-check` for property-based tests (suffix: `*.property.test.ts`)
-- Test naming: `describe('functionName', () => { it('should scenario', ...) })`
-- Colocate tests: `incidents.ts` → `incidents.test.ts`
+**Required Component Structure**:
+```typescript
+interface ComponentProps {
+  prop: Type
+}
 
-**Data Fetching Pattern**:
+export function Component({ prop }: ComponentProps) {
+  // Logic here
+}
+```
+
+**Required Data Fetching**:
 ```typescript
 const { data, isLoading, error } = useQuery({
   queryKey: ['resource', params],
@@ -57,77 +57,63 @@ const { data, isLoading, error } = useQuery({
 })
 ```
 
-**Component Structure**:
-```typescript
-interface ComponentProps {
-  prop: Type
-}
-
-export function Component({ prop }: ComponentProps) {
-  // Component logic
-}
-```
+**Testing**:
+- Vitest + React Testing Library for components
+- Property tests: `fast-check`, suffix `*.property.test.ts`
+- Naming: `describe('functionName', () => { it('should scenario', ...) })`
+- Colocate: `incidents.ts` → `incidents.test.ts`
 
 ## Node.js (remediation-action/, demo-app/)
 
-**Stack**: Node.js 20, TypeScript (action) / JavaScript (demo), Express (demo)
+**Stack**: Node.js 20, TypeScript (action), JavaScript (demo), Express (demo)
 
-**Testing**: Jest with `fast-check` for property-based tests
-
-**Action Conventions**:
-- Keep action logic minimal and focused
+**Action Requirements**:
+- Minimal, focused logic
 - Use `@actions/core` for inputs/outputs
-- Handle errors gracefully with clear messages
+- Graceful error handling with clear messages
 
-## API Design
+**Testing**: Jest with `fast-check` for property tests
+
+## API Conventions
 
 **Endpoints** (incident-service):
-- `POST /api/v1/webhooks/incidents?provider={provider}` - Receive webhooks
-- `GET /api/v1/incidents` - List with filtering (status, severity, service)
-- `GET /api/v1/incidents/:id` - Get details
-- `POST /api/v1/incidents/:id/trigger` - Manual remediation trigger
-- `POST /api/v1/webhooks/workflow-status` - Workflow status updates
+- `POST /api/v1/webhooks/incidents?provider={provider}` - Webhook ingestion
+- `GET /api/v1/incidents` - List (filter: status, severity, service)
+- `GET /api/v1/incidents/:id` - Details
+- `POST /api/v1/incidents/:id/trigger` - Manual remediation
+- `POST /api/v1/webhooks/workflow-status` - Status updates
 - `GET /api/v1/health` - Health check
-- `GET /api/v1/metrics` - Prometheus metrics (port 9090)
+- `GET /api/v1/metrics` - Prometheus (port 9090)
 
-**Conventions**:
-- Use kebab-case for URL paths
-- Version all APIs: `/api/v1/`
-- Return proper HTTP status codes (200, 201, 400, 404, 500)
-- JSON responses with consistent error format
+**Rules**:
+- kebab-case URLs, version prefix `/api/v1/`
+- Proper status codes: 200 (OK), 201 (Created), 400 (Bad Request), 404 (Not Found), 500 (Server Error)
+- Consistent JSON error format
 
-## Configuration Management
+## Configuration
 
-**config.yaml**: Service mappings, MCP servers, concurrency limits
-- Maps service names to GitHub repositories
-- Defines Kiro CLI MCP server configurations
-- Sets `max_concurrent_workflows` and deduplication windows
+**config.yaml**: Service→repo mappings, MCP servers, `max_concurrent_workflows`, deduplication windows
 
-**.env**: Secrets and environment-specific values
-- Database URLs, API keys, tokens
-- Never commit to version control
-- Use `.env.example` as template
+**.env**: Secrets (DB URLs, API keys, tokens). Never commit. Use `.env.example` as template.
 
-**Repository Secrets**: GitHub Actions credentials (set via GitHub UI)
+**GitHub Secrets**: Set via repository settings UI for Actions credentials
 
-## Testing Requirements
+## Testing Standards
 
-**All Code**:
-- Unit tests for individual functions
+**Required Coverage**:
+- Unit tests for all functions
 - Integration tests for end-to-end flows
-- Property-based tests for invariants (min 100 iterations)
+- Property tests for invariants (min 100 iterations)
+- >80% code coverage overall
+- 100% coverage for critical paths (webhooks, remediation triggers)
 
-**Property Test Naming**:
+**Property Test Files**:
 - Go: `*_property_test.go`
 - TypeScript: `*.property.test.ts`
 
-**Coverage Goals**:
-- Aim for >80% code coverage
-- 100% coverage for critical paths (webhook processing, remediation triggers)
+## Development Commands
 
-## Development Workflow
-
-**Local Development**:
+**Quick Start**:
 ```bash
 ./scripts/dev.sh          # Start all services
 ./scripts/test.sh         # Run all tests
@@ -135,42 +121,32 @@ export function Component({ prop }: ComponentProps) {
 
 **Service-Specific**:
 ```bash
-# Go tests with race detector
-cd incident-service && go test -v -race ./...
-
-# Dashboard tests
-cd dashboard && npm test
-
-# Database migrations
-cd incident-service && go run cmd/migrate/main.go
+cd incident-service && go test -v -race ./...  # Go tests
+cd dashboard && npm test                        # Dashboard tests
+cd incident-service && go run cmd/migrate/main.go  # Migrations
 ```
 
 **Docker**:
 ```bash
-docker-compose build                    # Build all images
-docker-compose up                       # Start services
-docker-compose -f docker-compose.prod.yml up -d  # Production
+docker-compose up                               # Dev mode
+docker-compose -f docker-compose.prod.yml up -d # Production
 ```
 
-## Observability Standards
+## Observability
 
-**Logging**: Structured JSON with fields:
-- `level`: debug, info, warn, error
-- `timestamp`: ISO 8601
-- `message`: Human-readable description
-- `context`: Additional structured data
+**Logging**: Structured JSON with `level` (debug/info/warn/error), `timestamp` (ISO 8601), `message`, `context`
 
-**Metrics**: Prometheus format on port 9090
-- Counter: `_total` suffix (e.g., `incidents_received_total`)
-- Histogram: `_duration_seconds` for latencies
-- Gauge: Current state values
+**Metrics**: Prometheus on port 9090
+- Counters: `*_total` suffix (e.g., `incidents_received_total`)
+- Histograms: `*_duration_seconds` for latencies
+- Gauges: current state values
 
-**Health Checks**: `/api/v1/health` returns 200 when healthy
+**Health**: `/api/v1/health` returns 200 when healthy
 
-## Security Conventions
+## Security
 
-- Never log sensitive data (tokens, passwords, PII)
-- Use environment variables for secrets
+- Never log secrets (tokens, passwords, PII)
+- Secrets via environment variables only
 - Validate all webhook signatures
-- Rate limit API endpoints via Redis
-- Use least-privilege GitHub tokens (scoped to specific repos)
+- Rate limiting via Redis
+- Least-privilege GitHub tokens (repo-scoped)
