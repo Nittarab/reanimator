@@ -276,15 +276,15 @@ The AI SRE Platform is an autonomous infrastructure remediation system that acts
 
 ### Requirement 22
 
-**User Story:** As a platform operator, I want to configure MCP servers for observability platforms, so that Kiro CLI can query additional context during remediation.
+**User Story:** As a repository owner, I want to configure MCP servers using GitHub secrets and repository configuration, so that Kiro CLI can query additional context during remediation.
 
 #### Acceptance Criteria
 
-1. WHEN the Platform is configured, THEN the Platform SHALL accept MCP server configurations including provider type, API endpoints, and credentials
-2. WHEN a remediation workflow is triggered, THEN the Incident Service SHALL include MCP server configuration in the workflow inputs
-3. WHERE repository-specific MCP configurations exist, the Incident Service SHALL merge them with platform-level configurations
-4. WHEN MCP credentials are stored, THEN the Incident Service SHALL encrypt them and pass them securely to the workflow
-5. WHERE the operator uses GitHub secrets, the workflow SHALL read MCP credentials from repository secrets
+1. WHEN a remediation workflow starts, THEN the workflow SHALL read MCP server configurations from the repository's `.kiro/settings/mcp.json` file if it exists
+2. WHEN the workflow reads MCP configuration, THEN the workflow SHALL substitute environment variables from GitHub secrets into the MCP server configuration
+3. WHERE no `.kiro/settings/mcp.json` exists, the workflow SHALL create a default MCP configuration based on available environment variables (e.g., DATADOG_API_KEY)
+4. WHEN MCP credentials are passed to Kiro CLI, THEN the workflow SHALL use GitHub's secret masking to prevent credential exposure in logs
+5. WHERE multiple MCP servers are configured, the workflow SHALL configure all of them for Kiro CLI to use
 
 ### Requirement 23
 

@@ -262,12 +262,6 @@ deduplication:
   
 concurrency:
   max_workflows_per_repo: 2
-
-mcp_servers:
-  - name: datadog
-    type: datadog
-    api_key: ${DATADOG_API_KEY}
-    app_key: ${DATADOG_APP_KEY}
 ```
 
 ### 2. Dashboard
@@ -336,9 +330,6 @@ inputs:
     description: 'Kiro CLI version to use'
     required: false
     default: 'latest'
-  mcp_config:
-    description: 'JSON string of MCP server configurations'
-    required: false
 
 outputs:
   pr_url:
@@ -356,7 +347,7 @@ runs:
 
 1. Checkout repository
 2. Install Kiro CLI
-3. Configure MCP servers from input
+3. Configure MCP servers from repository secrets and `.kiro/settings/mcp.json`
 4. Create incident context file
 5. Run Kiro CLI with remediation prompt
 6. Commit changes if any
@@ -393,9 +384,10 @@ jobs:
           stack_trace: ${{ inputs.stack_trace }}
           service_name: ${{ inputs.service_name }}
           timestamp: ${{ inputs.timestamp }}
-          mcp_config: ${{ secrets.MCP_CONFIG }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+          DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
 ```
 
 ### 4. Kiro CLI Integration
@@ -435,7 +427,12 @@ Begin your analysis.
 
 **MCP Configuration:**
 
-The action will create an `mcp.json` file for Kiro CLI:
+The action will read MCP configuration from two sources:
+
+1. **Repository's `.kiro/settings/mcp.json`** (if it exists) - For repository-specific MCP servers
+2. **Environment variables from GitHub secrets** - For credentials like `DATADOG_API_KEY`, `DATADOG_APP_KEY`
+
+The action will merge these configurations and pass them to Kiro CLI. If no `.kiro/settings/mcp.json` exists, the action will create a default configuration based on available environment variables:
 
 ```json
 {
@@ -496,16 +493,6 @@ type ServiceMapping struct {
     ServiceName string `yaml:"service_name"`
     Repository  string `yaml:"repository"`
     Branch      string `yaml:"branch"`
-}
-```
-
-### MCP Server Config
-
-```go
-type MCPServerConfig struct {
-    Name   string            `yaml:"name" json:"name"`
-    Type   string            `yaml:"type" json:"type"`
-    Config map[string]string `yaml:"config" json:"config"`
 }
 ```
 
@@ -774,23 +761,15 @@ var sentrySeverityMap = map[string]string{
 *For any* custom rule with syntax errors, attempting to load it should fail with a descriptive error message and not crash the service.
 **Validates: Requirements 16.5**
 
-### Property 18: MCP configuration merging
-*For any* platform-level MCP configuration and repository-specific MCP configuration, merging them should result in repository-specific values overriding platform-level values for the same keys.
-**Validates: Requirements 22.3**
-
-### Property 19: MCP credential encryption
-*For any* MCP credentials stored by the service, they should be encrypted at rest and only decrypted when passed to workflows.
-**Validates: Requirements 22.4**
-
-### Property 20: Notification content completeness
+### Property 18: Notification content completeness
 *For any* notification sent by the workflow, it should include incident severity, affected service, and pull request link.
 **Validates: Requirements 23.5**
 
-### Property 21: Dashboard incident ordering
+### Property 19: Dashboard incident ordering
 *For any* list of incidents displayed in the dashboard, they should be ordered by timestamp with the most recent first.
 **Validates: Requirements 19.1**
 
-### Property 22: Dashboard incident display completeness
+### Property 20: Dashboard incident display completeness
 *For any* incident displayed in the dashboard, it should show status, affected service, error message, and associated repository.
 **Validates: Requirements 19.2**
 
@@ -1594,15 +1573,6 @@ CREATE TABLE service_mappings (
     service_name VARCHAR(255) UNIQUE NOT NULL,
     repository VARCHAR(255) NOT NULL,
     branch VARCHAR(255) NOT NULL DEFAULT 'main',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE mcp_servers (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    type VARCHAR(100) NOT NULL,
-    config JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
