@@ -1,0 +1,41 @@
+server:
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+
+database:
+  host: postgres
+  port: 5432
+  database: ai_sre
+  ssl_mode: disable
+
+redis:
+  url: redis://redis:6379
+
+github:
+  api_url: https://api.github.com
+  workflow_name: remediate-incident.yml
+
+service_mappings:
+  - service_name: api-gateway
+    repository: org/api-gateway
+    branch: main
+  - service_name: user-service
+    repository: org/user-service
+    branch: main
+  - service_name: payment-service
+    repository: org/payment-service
+    branch: main
+
+deduplication:
+  time_window: 5m
+
+concurrency:
+  max_workflows_per_repo: 2
+
+mcp_servers:
+  - name: datadog
+    type: datadog
+    config:
+      api_key_env: DATADOG_API_KEY
+      app_key_env: DATADOG_APP_KEY
