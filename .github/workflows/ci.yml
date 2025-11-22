@@ -153,9 +153,20 @@ jobs:
         working-directory: ./remediation-action
         run: npm ci
       
-      - name: Run tests
+      - name: Build action
+        working-directory: ./remediation-action
+        run: npm run build
+      
+      - name: Run unit tests
         working-directory: ./remediation-action
         run: npm test
+      
+      - name: Install jq for integration tests
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Run integration tests
+        working-directory: ./remediation-action/tests/integration
+        run: ./test-workflow-execution.sh
       
       - name: Upload coverage
         uses: codecov/codecov-action@v3
