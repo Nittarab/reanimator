@@ -40,3 +40,27 @@ concurrency:
   max_workflows_per_repo: 2
 
 mcp_servers: []
+
+custom_rules:
+  - name: high-priority-payment-errors
+    description: Escalate payment service errors to critical
+    enabled: true
+    conditions:
+      service_name: payment-service
+      error_pattern: ".*payment.*failed.*"
+    actions:
+      set_severity: critical
+      add_metadata:
+        priority: high
+        team: payments
+  
+  - name: ignore-test-errors
+    description: Skip remediation for test environment errors
+    enabled: true
+    conditions:
+      metadata:
+        environment: test
+    actions:
+      skip_remediation: true
+      add_metadata:
+        reason: test_environment
