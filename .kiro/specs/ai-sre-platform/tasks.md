@@ -74,33 +74,33 @@
   - **Property 8: Concurrency limit enforcement**
   - **Validates: Requirements 3.4, 12.2, 12.3**
 
-- [ ] 6. Implement configuration management
+- [x] 6. Implement configuration management
   - Create configuration file parser (YAML)
   - Implement service mapping configuration
   - Implement custom rule configuration
   - Implement configuration hot-reloading
   - _Requirements: 11.1, 11.2, 11.4, 16.1_
 
-- [ ] 6.1 Write property test for configuration parsing
+- [x] 6.1 Write property test for configuration parsing
   - **Property 11: Configuration parsing validity**
   - **Validates: Requirements 11.1, 11.2**
 
-- [ ] 6.2 Write property test for rule syntax validation
+- [x] 6.2 Write property test for rule syntax validation
   - **Property 17: Rule syntax validation**
   - **Validates: Requirements 16.5**
 
-- [ ] 7. Implement custom rule engine
+- [x] 7. Implement custom rule engine
   - Create rule definition schema
   - Implement rule evaluation engine
   - Implement rule actions (severity adjustment, metadata enrichment)
   - Implement rule validation
   - _Requirements: 16.2, 16.3, 16.4, 16.5_
 
-- [ ] 7.1 Write property test for rule evaluation
+- [x] 7.1 Write property test for rule evaluation
   - **Property 16: Custom rule evaluation**
   - **Validates: Requirements 16.2, 16.3**
 
-- [ ] 8. Implement audit trail and incident history
+- [x] 8. Implement audit trail and incident history
   - Create incident_events table schema
   - Implement event logging for all state transitions
   - Implement audit trail query API with filtering
@@ -108,26 +108,26 @@
   - Implement data retention policy
   - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 20.3_
 
-- [ ] 8.1 Write property test for audit completeness
+- [x] 8.1 Write property test for audit completeness
   - **Property 13: Audit trail completeness**
   - **Validates: Requirements 14.1, 20.3**
 
-- [ ] 8.2 Write property test for filtering correctness
+- [x] 8.2 Write property test for filtering correctness
   - **Property 14: Incident filtering correctness**
   - **Validates: Requirements 14.3, 19.5**
 
-- [ ] 8.3 Write property test for statistics accuracy
+- [x] 8.3 Write property test for statistics accuracy
   - **Property 15: Statistics computation accuracy**
   - **Validates: Requirements 14.4**
 
-- [ ] 9. Implement workflow status webhook handler
+- [x] 9. Implement workflow status webhook handler
   - Create webhook endpoint for workflow completion
   - Implement incident status updates from workflow results
   - Implement queue processing on workflow completion
   - Store PR URL and diagnosis in incident record
   - _Requirements: 12.5_
 
-- [ ] 9.1 Write property test for queue processing
+- [x] 9.1 Write property test for queue processing
   - **Property 12: Workflow completion updates queue**
   - **Validates: Requirements 12.5**
 
