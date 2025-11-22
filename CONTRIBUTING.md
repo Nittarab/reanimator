@@ -185,6 +185,72 @@ cd demo-app
 npm test -- --run
 ```
 
+### Remediation Action
+
+#### Unit Tests
+```bash
+cd remediation-action
+npm test
+```
+
+#### Integration Tests
+
+The remediation action includes integration tests that verify the GitHub Actions workflow executes correctly using [nektos/act](https://github.com/nektos/act).
+
+**Prerequisites:**
+
+Install nektos/act:
+```bash
+# macOS
+brew install act
+
+# Linux
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+```
+
+Install jq (JSON processor):
+```bash
+# macOS
+brew install jq
+
+# Linux (Debian/Ubuntu)
+sudo apt-get install jq
+```
+
+**Running Integration Tests:**
+
+```bash
+cd remediation-action
+
+# Build the action first
+npm run build
+
+# Run workflow structure tests (no act required)
+cd tests/integration
+./test-workflow-execution.sh
+
+# Run full integration tests with act (requires Docker)
+./run-act-tests.sh
+```
+
+**What the Integration Tests Verify:**
+
+- Workflow file structure and configuration
+- Incident context file creation
+- Branch naming conventions (includes incident ID)
+- MCP configuration handling
+- Test repository fixtures with buggy code
+- Error handling scenarios
+
+**Test Fixtures:**
+
+The integration tests use sample incident events and a test repository with intentional bugs:
+
+- `tests/fixtures/incident-events/` - Sample incident payloads
+- `tests/fixtures/test-repo/` - Test repository with buggy code (null pointers, division by zero)
+
+See [remediation-action/tests/integration/README.md](remediation-action/tests/integration/README.md) for detailed documentation.
+
 ## Code Review Process
 
 1. All changes require a pull request
