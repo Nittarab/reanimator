@@ -172,8 +172,18 @@
   - Display service-to-repository mappings
   - _Requirements: 11.1, 11.2_
 
-- [ ] 15. Checkpoint - Ensure all Dashboard tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+- [x] 15. Checkpoint - Set up development environment and verify Dashboard
+  - Run all Dashboard tests and ensure they pass
+  - Start the development environment using docker-compose or local services
+  - Create seed data script to populate the database with sample incidents
+  - Seed incidents with various statuses (pending, workflow_triggered, in_progress, pr_created, resolved, failed)
+  - Verify the Dashboard loads correctly at http://localhost:3001
+  - Verify the Incident Service API is accessible at http://localhost:8080
+  - Verify the incident list displays seed data correctly
+  - Verify filtering and sorting work as expected
+  - Verify the incident detail page displays full incident information
+  - Ask the user to review the running application and provide feedback
+  - _Requirements: Development Environment Setup_
 
 - [ ] 16. Build Remediation GitHub Action
   - Set up TypeScript project for GitHub Action
