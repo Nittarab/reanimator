@@ -916,13 +916,78 @@ The platform will use property-based testing to verify universal properties acro
 5. Verify incident status updated
 6. Verify dashboard displays updated status
 
-**GitHub Action Testing:**
-1. Create test repository with sample code containing a bug
-2. Trigger action with incident data
-3. Verify Kiro CLI installed
-4. Verify MCP configuration created
-5. Verify branch created and PR opened
-6. Verify post-mortem includes required sections
+**GitHub Action Testing with nektos/act:**
+
+The platform uses [nektos/act](https://nektosact.com/) to run GitHub Actions locally for integration testing. This provides real workflow execution without requiring GitHub infrastructure.
+
+**Benefits:**
+- Run actual GitHub Actions workflows locally
+- Test with real git operations and file system changes
+- Fast iteration without pushing to GitHub
+- Reproducible test environment
+- No GitHub Actions minutes consumed
+
+**Test Setup:**
+1. Install nektos/act (via Homebrew, Docker, or binary)
+2. Create test fixtures directory with sample incident events
+3. Create test repository fixture with intentionally buggy code
+4. Configure test secrets and environment variables
+
+**Test Scenarios:**
+1. **Successful Remediation Flow**
+   - Trigger workflow with test incident data using act
+   - Verify incident context file created
+   - Verify Kiro CLI installation (mocked or real)
+   - Verify branch creation with correct naming pattern
+   - Verify git commit with proper message format
+   - Verify PR creation (dry-run mode to avoid actual GitHub API calls)
+   - Verify post-mortem generation with all required sections
+
+2. **Error Handling**
+   - Test Kiro CLI installation failure
+   - Test git operation failures (branch creation, commit, push)
+   - Test PR creation failure
+   - Verify proper error reporting to Incident Service
+   - Verify graceful degradation when MCP servers unavailable
+
+3. **MCP Configuration**
+   - Test reading existing `.kiro/settings/mcp.json`
+   - Test generating default MCP config from environment variables
+   - Test secret masking in logs
+   - Test multiple MCP server configurations
+
+**Running Tests:**
+```bash
+# Run remediation workflow locally with test incident
+act workflow_dispatch \
+  -e test-fixtures/incident-event.json \
+  -s GITHUB_TOKEN=$TEST_GITHUB_TOKEN \
+  -W .github/workflows/demo-remediate.yml \
+  --container-architecture linux/amd64
+
+# Run with verbose output for debugging
+act workflow_dispatch \
+  -e test-fixtures/incident-event.json \
+  -s GITHUB_TOKEN=$TEST_GITHUB_TOKEN \
+  -W .github/workflows/demo-remediate.yml \
+  --verbose
+
+# Dry-run to see what would execute
+act workflow_dispatch \
+  -e test-fixtures/incident-event.json \
+  -n
+```
+
+**CI/CD Integration:**
+- Integration tests run in CI pipeline using act
+- Tests execute before merging PRs
+- Failures block deployment
+- Test results included in coverage reports
+
+**Limitations:**
+- Some GitHub-specific features may behave differently
+- Network calls to external services should be mocked
+- Actual PR creation disabled in tests (dry-run mode)
 
 ### Performance Testing
 

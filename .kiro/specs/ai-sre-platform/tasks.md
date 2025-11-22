@@ -232,6 +232,17 @@
 - [x] 20. Checkpoint - Ensure all GitHub Action tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
+- [ ] 20.1 Create act-based integration tests for remediation workflow
+  - Install nektos/act for local GitHub Actions testing
+  - Create test fixtures directory with sample incident events
+  - Create test repository fixture with intentionally buggy code
+  - Write integration test script that uses act to run the workflow locally
+  - Test workflow execution: context file creation, branch creation, commit, PR creation (dry-run)
+  - Verify workflow handles errors gracefully (missing Kiro CLI, git failures, etc.)
+  - Add act integration tests to CI/CD pipeline
+  - Document how to run act tests locally in CONTRIBUTING.md
+  - _Requirements: 18.3, Integration Testing_
+
 - [ ] 21. Build Demo Application
   - Set up Node.js/Express project
   - Create buggy endpoints (division by zero, null pointer, array processing)
