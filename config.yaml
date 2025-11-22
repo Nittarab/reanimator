@@ -22,6 +22,17 @@ github:
   token: ${GITHUB_TOKEN}
   workflow_name: remediate-incident.yml
 
+service_mappings:
+  - service_name: api-gateway
+    repository: org/api-gateway
+    branch: main
+  - service_name: user-service
+    repository: org/user-service
+    branch: main
+  - service_name: payment-service
+    repository: org/payment-service
+    branch: main
+
 deduplication:
   time_window: 5m
 

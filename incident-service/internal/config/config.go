@@ -10,13 +10,14 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Server        ServerConfig        `yaml:"server"`
-	Database      DatabaseConfig      `yaml:"database"`
-	Redis         RedisConfig         `yaml:"redis"`
-	GitHub        GitHubConfig        `yaml:"github"`
-	Deduplication DeduplicationConfig `yaml:"deduplication"`
-	Concurrency   ConcurrencyConfig   `yaml:"concurrency"`
-	MCPServers    []MCPServerConfig   `yaml:"mcp_servers"`
+	Server          ServerConfig        `yaml:"server"`
+	Database        DatabaseConfig      `yaml:"database"`
+	Redis           RedisConfig         `yaml:"redis"`
+	GitHub          GitHubConfig        `yaml:"github"`
+	ServiceMappings []ServiceMapping    `yaml:"service_mappings"`
+	Deduplication   DeduplicationConfig `yaml:"deduplication"`
+	Concurrency     ConcurrencyConfig   `yaml:"concurrency"`
+	MCPServers      []MCPServerConfig   `yaml:"mcp_servers"`
 }
 
 // ServerConfig contains HTTP server settings
@@ -59,6 +60,13 @@ type DeduplicationConfig struct {
 // ConcurrencyConfig contains workflow concurrency settings
 type ConcurrencyConfig struct {
 	MaxWorkflowsPerRepo int `yaml:"max_workflows_per_repo"`
+}
+
+// ServiceMapping maps a service name to a repository
+type ServiceMapping struct {
+	ServiceName string `yaml:"service_name"`
+	Repository  string `yaml:"repository"`
+	Branch      string `yaml:"branch"`
 }
 
 // MCPServerConfig contains MCP server configuration
