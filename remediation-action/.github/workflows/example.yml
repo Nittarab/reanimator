@@ -1,0 +1,61 @@
+name: Example Remediation Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      incident_id:
+        description: 'Incident ID'
+        required: true
+        type: string
+      error_message:
+        description: 'Error message'
+        required: true
+        type: string
+      stack_trace:
+        description: 'Stack trace (optional)'
+        required: false
+        type: string
+      service_name:
+        description: 'Service name'
+        required: true
+        type: string
+      timestamp:
+        description: 'Incident timestamp'
+        required: true
+        type: string
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run AI SRE Remediation
+        uses: ./
+        with:
+          incident_id: ${{ inputs.incident_id }}
+          error_message: ${{ inputs.error_message }}
+          stack_trace: ${{ inputs.stack_trace }}
+          service_name: ${{ inputs.service_name }}
+          timestamp: ${{ inputs.timestamp }}
+          kiro_version: 'latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Add your observability platform credentials as secrets
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+          DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          PAGERDUTY_API_KEY: ${{ secrets.PAGERDUTY_API_KEY }}
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+
+      - name: Display results
+        if: always()
+        run: |
+          echo "Status: ${{ steps.remediate.outputs.status }}"
+          echo "Diagnosis: ${{ steps.remediate.outputs.diagnosis }}"
+          if [ -n "${{ steps.remediate.outputs.pr_url }}" ]; then
+            echo "PR URL: ${{ steps.remediate.outputs.pr_url }}"
+          fi

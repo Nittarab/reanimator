@@ -23,6 +23,10 @@ inputs:
   timestamp:
     description: 'Incident timestamp'
     required: true
+  severity:
+    description: 'Incident severity (critical, high, medium, low)'
+    required: false
+    default: 'medium'
   kiro_version:
     description: 'Kiro CLI version to use'
     required: false
