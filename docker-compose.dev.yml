@@ -6,15 +6,23 @@ services:
       context: ./incident-service
       dockerfile: Dockerfile
       target: development
+    container_name: ai-sre-incident-service
     ports:
       - "8080:8080"
       - "9090:9090"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_sre?sslmode=disable
-      - REDIS_URL=redis://redis:6379
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=ai_sre
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-dummy_token_for_dev}
       - GITHUB_API_URL=${GITHUB_API_URL:-https://api.github.com}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dev_encryption_key_32_bytes_long}
+      - CONFIG_PATH=/app/config.yaml
     volumes:
       - ./incident-service:/app
       - ./config.yaml:/app/config.yaml
@@ -23,6 +31,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - ai-sre-network
     command: go run cmd/server/main.go
 
   dashboard:
@@ -30,34 +40,34 @@ services:
       context: ./dashboard
       dockerfile: Dockerfile
       target: development
+    container_name: ai-sre-dashboard
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_PROXY_TARGET=http://incident-service:8080
     volumes:
       - ./dashboard:/app
       - /app/node_modules
-    command: npm run dev
+    networks:
+      - ai-sre-network
+    depends_on:
+      - incident-service
+    command: npm run dev -- --host 0.0.0.0 --port 3001
 
   demo-app:
     build:
       context: ./demo-app
       dockerfile: Dockerfile
       target: development
+    container_name: ai-sre-demo-app
     ports:
-      - "3001:3001"
+      - "3002:3002"
     environment:
       - SENTRY_DSN=${SENTRY_DSN}
-      - PORT=3001
+      - PORT=3002
     volumes:
       - ./demo-app:/app
       - /app/node_modules
+    networks:
+      - ai-sre-network
     command: npm run dev
-
-  postgres:
-    ports:
-      - "5432:5432"
-
-  redis:
-    ports:
-      - "6379:6379"

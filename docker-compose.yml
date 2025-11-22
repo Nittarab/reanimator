@@ -1,8 +1,11 @@
 version: '3.8'
 
+name: ai-sre-platform
+
 services:
   postgres:
     image: postgres:15-alpine
+    container_name: ai-sre-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -16,9 +19,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ai-sre-network
 
   redis:
     image: redis:7-alpine
+    container_name: ai-sre-redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -26,6 +32,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ai-sre-network
 
 volumes:
   postgres_data:
+
+networks:
+  ai-sre-network:
+    driver: bridge
