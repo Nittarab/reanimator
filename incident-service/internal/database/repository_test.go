@@ -232,6 +232,15 @@ func setupTestSchema(db *sql.DB) error {
 			triggered_at TIMESTAMP,
 			completed_at TIMESTAMP
 		);
+
+		CREATE TABLE IF NOT EXISTS incident_events (
+			id SERIAL PRIMARY KEY,
+			incident_id VARCHAR(255) NOT NULL,
+			event_type VARCHAR(100) NOT NULL,
+			event_data JSONB NOT NULL DEFAULT '{}',
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE
+		);
 	`
 
 	_, err := db.Exec(schema)
@@ -240,7 +249,12 @@ func setupTestSchema(db *sql.DB) error {
 
 // cleanupTestData removes all test data
 func cleanupTestData(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM incidents")
+	// Delete in order due to foreign key constraints
+	_, err := db.Exec("DELETE FROM incident_events")
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("DELETE FROM incidents")
 	return err
 }
 
