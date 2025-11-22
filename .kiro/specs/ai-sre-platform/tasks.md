@@ -38,7 +38,7 @@
   - **Property 3: Malformed data error handling**
   - **Validates: Requirements 1.4**
 
-- [ ] 4. Implement incident management logic
+- [x] 4. Implement incident management logic
   - Create Incident data model and database schema
   - Implement incident creation and persistence
   - Implement service-to-repository mapping lookup
@@ -46,11 +46,11 @@
   - Implement incident status state machine
   - _Requirements: 1.5, 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 4.1 Write property test for service lookup consistency
+- [x] 4.1 Write property test for service lookup consistency
   - **Property 4: Service-to-repository lookup consistency**
   - **Validates: Requirements 2.2**
 
-- [ ] 4.2 Write property test for deduplication
+- [x] 4.2 Write property test for deduplication
   - **Property 5: Deduplication within time window**
   - **Validates: Requirements 2.3**
 
