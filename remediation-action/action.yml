@@ -1,0 +1,49 @@
+name: 'AI SRE Remediation'
+description: 'Automatically diagnose and fix incidents using Kiro CLI'
+author: 'AI SRE Platform'
+
+branding:
+  icon: 'zap'
+  color: 'blue'
+
+inputs:
+  incident_id:
+    description: 'Unique incident identifier'
+    required: true
+  error_message:
+    description: 'Error message from the incident'
+    required: true
+  stack_trace:
+    description: 'Stack trace if available'
+    required: false
+    default: ''
+  service_name:
+    description: 'Name of the affected service'
+    required: true
+  timestamp:
+    description: 'Incident timestamp'
+    required: true
+  kiro_version:
+    description: 'Kiro CLI version to use'
+    required: false
+    default: 'latest'
+  mcp_config:
+    description: 'JSON string of MCP server configurations'
+    required: false
+    default: '{}'
+  incident_service_url:
+    description: 'URL of the incident service for status updates'
+    required: false
+    default: ''
+
+outputs:
+  pr_url:
+    description: 'URL of the created pull request'
+  status:
+    description: 'Remediation status: success, failed, or no_fix_needed'
+  diagnosis:
+    description: 'Root cause diagnosis summary'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
