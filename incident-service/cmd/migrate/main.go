@@ -24,6 +24,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Override with TEST_ environment variables if present
+	if testHost := os.Getenv("TEST_DATABASE_HOST"); testHost != "" {
+		cfg.Database.Host = testHost
+	}
+	if testPort := os.Getenv("TEST_DATABASE_PORT"); testPort != "" {
+		fmt.Sscanf(testPort, "%d", &cfg.Database.Port)
+	}
+	if testDB := os.Getenv("TEST_DATABASE_NAME"); testDB != "" {
+		cfg.Database.Database = testDB
+	}
+	if testUser := os.Getenv("TEST_DATABASE_USER"); testUser != "" {
+		cfg.Database.User = testUser
+	}
+	if testPassword := os.Getenv("TEST_DATABASE_PASSWORD"); testPassword != "" {
+		cfg.Database.Password = testPassword
+	}
+	if testSSLMode := os.Getenv("TEST_DATABASE_SSL_MODE"); testSSLMode != "" {
+		cfg.Database.SSLMode = testSSLMode
+	}
+
 	// Connect to database
 	db, err := sql.Open("postgres", cfg.Database.DatabaseDSN())
 	if err != nil {
