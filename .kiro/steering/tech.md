@@ -1,128 +1,176 @@
-# Technology Stack
+---
+inclusion: always
+---
 
-## Incident Service
+# Technology Stack & Conventions
 
-- **Language**: Go 1.21+
-- **Framework**: Chi (lightweight HTTP router)
-- **Database**: PostgreSQL 15+ (ACID compliance, JSON support)
-- **Cache**: Redis 7+ (rate limiting, deduplication)
-- **Testing**: `testing` package, `gopter` for property-based testing
+## Go (incident-service/)
 
-## Dashboard
+**Stack**: Go 1.21+, Chi router, PostgreSQL 15+, Redis 7+
 
-- **Framework**: React 18 with TypeScript
-- **State Management**: TanStack Query (React Query)
-- **UI Library**: shadcn/ui (Tailwind CSS components)
-- **Build Tool**: Vite
-- **Testing**: Vitest, React Testing Library, `fast-check` for property-based testing
+**Code Style**:
+- Always use `fmt.Errorf("context: %w", err)` to wrap errors with context
+- HTTP handlers: set Content-Type, write status code, then encode JSON response
+- Use `context.Context` for cancellation and timeouts in all I/O operations
+- Run tests with race detector: `go test -v -race ./...`
 
-## Remediation GitHub Action
+**Testing**:
+- Standard `testing` package for unit tests
+- `gopter` for property-based tests (suffix: `*_property_test.go`)
+- Property tests must run minimum 100 iterations
+- Mark properties with comments: `// Property: description`
+- Test naming: `func TestFunctionName_Scenario(t *testing.T)`
 
-- **Runtime**: Node.js 20
-- **Language**: TypeScript
-- **Testing**: Jest, `fast-check` for property-based testing
+**Database**:
+- Use PostgreSQL JSON columns for flexible data (e.g., incident metadata)
+- All queries through Repository interface for testability
+- Migrations in `migrations/` numbered sequentially: `001_`, `002_`, etc.
+- Run migrations: `go run cmd/migrate/main.go`
 
-## Demo Application
+**Dependencies**:
+- Chi for routing (lightweight, idiomatic)
+- `lib/pq` for PostgreSQL driver
+- `go-redis` for Redis client
+- Avoid heavy frameworks; prefer standard library
 
-- **Runtime**: Node.js 20
-- **Framework**: Express
-- **Database**: SQLite or in-memory
-- **Error Tracking**: Sentry integration
+## TypeScript/React (dashboard/)
 
-## Infrastructure
+**Stack**: React 18, TypeScript, Vite, TanStack Query, shadcn/ui, Tailwind CSS
 
-- **Containerization**: Docker with multi-stage builds
-- **Orchestration**: Docker Compose (dev/prod), Kubernetes (optional)
-- **CI/CD**: GitHub Actions
-- **Container Registry**: GitHub Container Registry (ghcr.io)
+**Code Style**:
+- Use `@/` path alias for imports from `src/`
+- Functional components with TypeScript interfaces for props
+- TanStack Query for all data fetching (no manual fetch in components)
+- shadcn/ui components for consistent UI (in `src/components/ui/`)
 
-## Common Commands
+**Testing**:
+- Vitest + React Testing Library for component tests
+- `fast-check` for property-based tests (suffix: `*.property.test.ts`)
+- Test naming: `describe('functionName', () => { it('should scenario', ...) })`
+- Colocate tests: `incidents.ts` → `incidents.test.ts`
 
-### Development
+**Data Fetching Pattern**:
+```typescript
+const { data, isLoading, error } = useQuery({
+  queryKey: ['resource', params],
+  queryFn: () => apiFunction(params)
+})
+```
 
+**Component Structure**:
+```typescript
+interface ComponentProps {
+  prop: Type
+}
+
+export function Component({ prop }: ComponentProps) {
+  // Component logic
+}
+```
+
+## Node.js (remediation-action/, demo-app/)
+
+**Stack**: Node.js 20, TypeScript (action) / JavaScript (demo), Express (demo)
+
+**Testing**: Jest with `fast-check` for property-based tests
+
+**Action Conventions**:
+- Keep action logic minimal and focused
+- Use `@actions/core` for inputs/outputs
+- Handle errors gracefully with clear messages
+
+## API Design
+
+**Endpoints** (incident-service):
+- `POST /api/v1/webhooks/incidents?provider={provider}` - Receive webhooks
+- `GET /api/v1/incidents` - List with filtering (status, severity, service)
+- `GET /api/v1/incidents/:id` - Get details
+- `POST /api/v1/incidents/:id/trigger` - Manual remediation trigger
+- `POST /api/v1/webhooks/workflow-status` - Workflow status updates
+- `GET /api/v1/health` - Health check
+- `GET /api/v1/metrics` - Prometheus metrics (port 9090)
+
+**Conventions**:
+- Use kebab-case for URL paths
+- Version all APIs: `/api/v1/`
+- Return proper HTTP status codes (200, 201, 400, 404, 500)
+- JSON responses with consistent error format
+
+## Configuration Management
+
+**config.yaml**: Service mappings, MCP servers, concurrency limits
+- Maps service names to GitHub repositories
+- Defines Kiro CLI MCP server configurations
+- Sets `max_concurrent_workflows` and deduplication windows
+
+**.env**: Secrets and environment-specific values
+- Database URLs, API keys, tokens
+- Never commit to version control
+- Use `.env.example` as template
+
+**Repository Secrets**: GitHub Actions credentials (set via GitHub UI)
+
+## Testing Requirements
+
+**All Code**:
+- Unit tests for individual functions
+- Integration tests for end-to-end flows
+- Property-based tests for invariants (min 100 iterations)
+
+**Property Test Naming**:
+- Go: `*_property_test.go`
+- TypeScript: `*.property.test.ts`
+
+**Coverage Goals**:
+- Aim for >80% code coverage
+- 100% coverage for critical paths (webhook processing, remediation triggers)
+
+## Development Workflow
+
+**Local Development**:
 ```bash
-# Start all services locally
-./scripts/dev.sh
+./scripts/dev.sh          # Start all services
+./scripts/test.sh         # Run all tests
+```
 
-# Run all tests
-./scripts/test.sh
-
-# Test incident service
+**Service-Specific**:
+```bash
+# Go tests with race detector
 cd incident-service && go test -v -race ./...
 
-# Test dashboard
+# Dashboard tests
 cd dashboard && npm test
 
-# Test demo app
-cd demo-app && npm test
-```
-
-### Production
-
-```bash
-# Deploy to production
-./scripts/prod.sh
-
-# View logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Check service status
-docker-compose -f docker-compose.prod.yml ps
-```
-
-### Database
-
-```bash
-# Run migrations
+# Database migrations
 cd incident-service && go run cmd/migrate/main.go
-
-# Connect to database
-psql $DATABASE_URL
 ```
 
-### Docker
-
+**Docker**:
 ```bash
-# Build all images
-docker-compose build
-
-# Build specific service
-docker build -t incident-service ./incident-service
-
-# Push to registry
-docker push ghcr.io/your-org/incident-service:latest
+docker-compose build                    # Build all images
+docker-compose up                       # Start services
+docker-compose -f docker-compose.prod.yml up -d  # Production
 ```
 
-## API Endpoints
+## Observability Standards
 
-### Incident Service
+**Logging**: Structured JSON with fields:
+- `level`: debug, info, warn, error
+- `timestamp`: ISO 8601
+- `message`: Human-readable description
+- `context`: Additional structured data
 
-- `POST /api/v1/webhooks/incidents?provider={provider}` - Receive incident webhooks
-- `GET /api/v1/incidents` - List incidents with filtering
-- `GET /api/v1/incidents/:id` - Get incident details
-- `POST /api/v1/incidents/:id/trigger` - Manually trigger remediation
-- `POST /api/v1/webhooks/workflow-status` - Receive workflow status updates
-- `GET /api/v1/health` - Health check
-- `GET /api/v1/metrics` - Prometheus metrics
+**Metrics**: Prometheus format on port 9090
+- Counter: `_total` suffix (e.g., `incidents_received_total`)
+- Histogram: `_duration_seconds` for latencies
+- Gauge: Current state values
 
-## Configuration
+**Health Checks**: `/api/v1/health` returns 200 when healthy
 
-Configuration is managed via YAML files and environment variables:
+## Security Conventions
 
-- `config.yaml` - Service mappings, MCP servers, concurrency limits
-- `.env` - Secrets and environment-specific settings
-- Repository secrets - GitHub tokens, API keys
-
-## Testing Strategy
-
-- **Unit tests**: Test individual functions and components
-- **Property-based tests**: Verify universal properties across random inputs (minimum 100 iterations)
-- **Integration tests**: Test end-to-end flows with real services
-- **Performance tests**: Validate response times and throughput
-
-## Observability
-
-- **Metrics**: Prometheus format exposed on port 9090
-- **Logging**: Structured JSON logs with severity levels
-- **Tracing**: Optional OpenTelemetry integration
-- **Health checks**: HTTP endpoints for liveness/readiness probes
+- Never log sensitive data (tokens, passwords, PII)
+- Use environment variables for secrets
+- Validate all webhook signatures
+- Rate limit API endpoints via Redis
+- Use least-privilege GitHub tokens (scoped to specific repos)
