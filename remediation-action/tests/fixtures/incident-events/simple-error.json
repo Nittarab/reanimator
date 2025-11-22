@@ -1,0 +1,8 @@
+{
+  "incident_id": "inc_test_001",
+  "error_message": "TypeError: Cannot read property 'id' of undefined",
+  "stack_trace": "at getUserById (src/users.js:15:20)\nat processRequest (src/api.js:42:15)",
+  "service_name": "user-service",
+  "timestamp": "2024-01-15T10:00:00Z",
+  "severity": "high"
+}

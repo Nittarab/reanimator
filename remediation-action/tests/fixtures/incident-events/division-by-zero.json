@@ -1,0 +1,8 @@
+{
+  "incident_id": "inc_test_002",
+  "error_message": "ZeroDivisionError: division by zero",
+  "stack_trace": "at calculateAverage (src/math.js:23:10)\nat computeStats (src/analytics.js:56:8)",
+  "service_name": "analytics-service",
+  "timestamp": "2024-01-15T11:30:00Z",
+  "severity": "critical"
+}

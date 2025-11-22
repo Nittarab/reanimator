@@ -1,0 +1,63 @@
+name: Test Remediation Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      incident_id:
+        description: 'Incident ID'
+        required: true
+        type: string
+      error_message:
+        description: 'Error message'
+        required: true
+        type: string
+      stack_trace:
+        description: 'Stack trace'
+        required: false
+        type: string
+        default: ''
+      service_name:
+        description: 'Service name'
+        required: true
+        type: string
+      timestamp:
+        description: 'Incident timestamp'
+        required: true
+        type: string
+      severity:
+        description: 'Incident severity'
+        required: false
+        type: string
+        default: 'medium'
+
+jobs:
+  remediate:
+    name: Remediate Incident
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run AI SRE Remediation
+        id: remediate
+        uses: ../../../  # Use local action for testing
+        with:
+          incident_id: ${{ inputs.incident_id }}
+          error_message: ${{ inputs.error_message }}
+          stack_trace: ${{ inputs.stack_trace }}
+          service_name: ${{ inputs.service_name }}
+          timestamp: ${{ inputs.timestamp }}
+          severity: ${{ inputs.severity }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Output results
+        run: |
+          echo "Status: ${{ steps.remediate.outputs.status }}"
+          echo "PR URL: ${{ steps.remediate.outputs.pr_url }}"
+          echo "Diagnosis: ${{ steps.remediate.outputs.diagnosis }}"

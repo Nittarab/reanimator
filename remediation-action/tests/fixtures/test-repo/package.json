@@ -1,0 +1,12 @@
+{
+  "name": "test-repo",
+  "version": "1.0.0",
+  "description": "Test repository with intentional bugs",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

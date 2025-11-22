@@ -1,0 +1,8 @@
+{
+  "incident_id": "inc_test_003",
+  "error_message": "NullPointerException: Attempt to invoke method on null object",
+  "stack_trace": "at OrderService.processOrder (OrderService.java:78)\nat OrderController.createOrder (OrderController.java:45)",
+  "service_name": "order-service",
+  "timestamp": "2024-01-15T12:45:00Z",
+  "severity": "high"
+}
