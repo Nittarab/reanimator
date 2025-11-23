@@ -160,6 +160,56 @@ func TestIncidentPersistenceRoundTrip(t *testing.T) {
 4. Add tests
 5. Update navigation
 
+### Modifying the Demo UI
+
+The demo application includes an interactive web UI at `demo-app/public/index.html`.
+
+**Key Components:**
+
+- **View Switching**: Three-tab interface (Bugs, Incidents, Dashboard)
+- **Auto-Refresh**: 5-second polling of incident service API
+- **Real-Time Updates**: Incident status updates without page reload
+- **Dynamic Links**: PR and observability platform links rendered based on incident data
+
+**Adding a New Bug Scenario:**
+
+1. Add buggy endpoint to `demo-app/src/routes/buggy.js`
+2. Add trigger button to `demo-app/public/index.html`:
+```html
+<div class="card">
+  <span class="bug-type">Your Bug Type</span>
+  <h2>Bug Name</h2>
+  <p>Description of the bug</p>
+  <button onclick="triggerBugN()">Trigger Bug</button>
+  <div id="responseN" class="response"></div>
+</div>
+```
+3. Add trigger function in the `<script>` section:
+```javascript
+async function triggerBugN() {
+  try {
+    const response = await fetch('/api/buggy/your-endpoint');
+    const data = await response.json();
+    showResponse('responseN', data, !response.ok);
+  } catch (error) {
+    showResponse('responseN', { error: error.message }, true);
+  }
+}
+```
+4. Update `demo-app/README.md` with bug details
+5. Test the end-to-end flow
+
+**Testing the Demo UI:**
+
+1. Start the full stack: `./scripts/dev.sh`
+2. Open http://localhost:3000
+3. Trigger bugs and verify:
+   - Error responses display correctly
+   - Incidents appear in the sidebar within 5 seconds
+   - Status updates reflect in real-time
+   - Links to PRs appear when available
+   - Dashboard iframe loads correctly
+
 ## Running Tests
 
 ### All Tests

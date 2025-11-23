@@ -44,9 +44,9 @@ SENTRY_DSN=your_sentry_dsn_here
 ```
 
 5. Access the services:
-- **Dashboard**: http://localhost:3000
+- **Demo App UI**: http://localhost:3000 (Interactive bug triggering and incident monitoring)
+- **Dashboard**: http://localhost:3001 (Full incident management interface)
 - **Incident Service API**: http://localhost:8080
-- **Demo App**: http://localhost:3001
 - **Metrics**: http://localhost:9090/metrics
 
 ## 📦 Architecture
@@ -79,6 +79,12 @@ Sample buggy service demonstrating:
 - Integration with Sentry for error tracking
 - End-to-end remediation flow
 - Common error scenarios (division by zero, null pointer, etc.)
+- **Interactive Web UI** with:
+  - One-click bug triggering
+  - Real-time incident status monitoring
+  - Links to PRs and observability platform issues
+  - Embedded dashboard view
+  - Auto-refreshing incident feed
 
 ## 🔧 Configuration
 
@@ -119,6 +125,46 @@ POST http://your-domain:8080/api/v1/webhooks/incidents?provider=pagerduty
 POST http://your-domain:8080/api/v1/webhooks/incidents?provider=grafana
 POST http://your-domain:8080/api/v1/webhooks/incidents?provider=sentry
 ```
+
+## 🎮 Demo Application
+
+The demo application provides an interactive way to test the AI SRE Platform's capabilities.
+
+### Features
+
+**Three-View Interface:**
+
+1. **Trigger Bugs View** (Default)
+   - 5 intentional bug scenarios with one-click triggers
+   - Real-time incident status sidebar
+   - Immediate error response display
+   - System health indicators
+
+2. **Incident Status View**
+   - Complete incident history
+   - Status badges (pending, workflow_triggered, pr_created, resolved, failed)
+   - Direct links to pull requests and observability platform issues
+   - Incident metadata and timestamps
+
+3. **Full Dashboard View**
+   - Embedded iframe of the complete AI SRE Dashboard
+   - Full incident management capabilities
+   - Advanced filtering and sorting
+
+### Using the Demo
+
+1. Open http://localhost:3000 in your browser
+2. Click any bug trigger button (e.g., "Division by Zero")
+3. Watch the error appear in the response area
+4. Within seconds, see the incident appear in the sidebar
+5. Monitor as the status changes: `pending` → `workflow_triggered` → `pr_created`
+6. Click the "Pull Request" link to review the automated fix
+7. Switch to "Incident Status" tab to see all incidents
+8. Switch to "Full Dashboard" tab for the complete management interface
+
+### Auto-Refresh
+
+The demo UI automatically refreshes incident data every 5 seconds, providing real-time visibility into the remediation process without manual page reloads.
 
 ## 🧪 Testing
 
