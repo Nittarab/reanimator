@@ -1,5 +1,27 @@
 name: Demo Remediation Workflow
 
+# This workflow demonstrates the AI SRE Platform's automated remediation capabilities.
+# It uses the local remediation action to diagnose and fix incidents in the demo application.
+#
+# Required GitHub Secrets:
+#   - SENTRY_AUTH_TOKEN: Sentry API authentication token (create at: Settings → Account → API → Auth Tokens)
+#   - SENTRY_ORG: Your Sentry organization slug (e.g., 'my-company')
+#   - SENTRY_PROJECT: Your Sentry project slug (e.g., 'demo-app')
+#
+# Optional GitHub Variables:
+#   - INCIDENT_SERVICE_URL: URL of the Incident Service for status updates (e.g., 'http://localhost:8080')
+#
+# To set up secrets:
+#   1. Go to: Settings → Secrets and variables → Actions
+#   2. Click "New repository secret"
+#   3. Add each secret with the appropriate value
+#
+# To test the workflow:
+#   1. Go to: Actions → Demo Remediation Workflow → Run workflow
+#   2. Fill in the incident details
+#   3. Click "Run workflow"
+#   4. Monitor the workflow execution and check for the created PR
+
 on:
   workflow_dispatch:
     inputs:
@@ -46,10 +68,13 @@ jobs:
           stack_trace: ${{ inputs.stack_trace }}
           service_name: ${{ inputs.service_name }}
           timestamp: ${{ inputs.timestamp }}
-          mcp_config: ${{ secrets.MCP_CONFIG }}
-          incident_service_url: ${{ vars.INCIDENT_SERVICE_URL }}
+          incident_service_url: ${{ vars.INCIDENT_SERVICE_URL || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Sentry MCP Server credentials
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       
       - name: Output results
         run: |
