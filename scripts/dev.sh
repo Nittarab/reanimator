@@ -22,18 +22,18 @@ set +a
 
 # Stop any existing containers
 echo "🧹 Cleaning up existing containers..."
-docker-compose -p $PROJECT_NAME down 2>/dev/null || true
+docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
 echo ""
 
 # Start base services (postgres, redis)
 echo "📦 Starting database and cache services..."
-docker-compose -p $PROJECT_NAME up -d postgres redis
+docker-compose -f docker-compose.dev.yml up -d postgres redis
 echo ""
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be ready..."
 for i in {1..30}; do
-  if docker exec ai-sre-postgres pg_isready -U postgres > /dev/null 2>&1; then
+  if docker exec ai-sre-postgres-dev pg_isready -U postgres > /dev/null 2>&1; then
     echo "✅ PostgreSQL is ready"
     break
   fi
@@ -45,7 +45,7 @@ for i in {1..30}; do
 done
 
 for i in {1..30}; do
-  if docker exec ai-sre-redis redis-cli ping > /dev/null 2>&1; then
+  if docker exec ai-sre-redis-dev redis-cli ping > /dev/null 2>&1; then
     echo "✅ Redis is ready"
     break
   fi
@@ -59,7 +59,7 @@ echo ""
 
 # Run database migrations
 echo "🔄 Running database migrations..."
-docker exec ai-sre-postgres psql -U postgres -d ai_sre -c "SELECT 1" > /dev/null 2>&1 || {
+docker exec ai-sre-postgres-dev psql -U postgres -d ai_sre -c "SELECT 1" > /dev/null 2>&1 || {
   echo "Database ai_sre already exists"
 }
 
@@ -87,7 +87,7 @@ echo "   - Demo App (Node.js)"
 echo ""
 
 # Start services in background
-docker-compose -p $PROJECT_NAME -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.dev.yml up -d
 
 # Wait for incident service to be ready
 echo "⏳ Waiting for Incident Service to be ready..."
@@ -120,7 +120,7 @@ echo "Press Ctrl+C to stop all services"
 echo ""
 
 # Follow logs
-docker-compose -p $PROJECT_NAME logs -f
+docker-compose -f docker-compose.dev.yml logs -f
 
 echo ""
 echo "✅ Development environment stopped"
