@@ -259,7 +259,7 @@
   - Embed dashboard iframe or API integration
   - _Requirements: Demo Application_
 
-- [ ] 23. Create Demo Kiro Specs and MCP configuration
+- [x] 23. Create Demo Kiro Specs and MCP configuration
   - Create .kiro/specs/demo-fixes directory
   - Write remediation strategies for division by zero
   - Write remediation strategies for null pointer errors
@@ -268,7 +268,7 @@
   - Document expected fixes for each scenario
   - _Requirements: Demo Application, 22.1_
 
-- [ ] 24. Set up Demo workflow
+- [x] 24. Set up Demo workflow
   - Create .github/workflows/demo-remediate.yml
   - Configure workflow to use local remediation action
   - Set up workflow inputs for incident data
@@ -287,7 +287,6 @@
 
 - [ ] 26. Create deployment scripts
   - Write scripts/dev.sh for local development
-  - Write scripts/prod.sh for production deployment
   - Write scripts/test.sh for running all tests
   - Create .env.example with all required variables
   - Document environment variable requirements
