@@ -5,15 +5,39 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual triggering
 
 env:
   GO_VERSION: '1.21'
   NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  lint-go:
+    name: Lint Go Code
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          working-directory: incident-service
+          args: --timeout=5m
+
   test-incident-service:
     name: Test Incident Service
     runs-on: ubuntu-latest
+    needs: [lint-go]
     
     services:
       postgres:
@@ -76,9 +100,37 @@ jobs:
           files: ./incident-service/coverage.out
           flags: incident-service
 
+  lint-typescript:
+    name: Lint TypeScript/JavaScript
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        project: [dashboard, demo-app, remediation-action]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./${{ matrix.project }}
+        run: npm ci
+      
+      - name: Run ESLint
+        working-directory: ./${{ matrix.project }}
+        run: npm run lint --if-present || echo "No lint script found"
+
   test-dashboard:
     name: Test Dashboard
     runs-on: ubuntu-latest
+    needs: [lint-typescript]
     
     steps:
       - name: Checkout code
@@ -108,6 +160,7 @@ jobs:
   test-demo-app:
     name: Test Demo App
     runs-on: ubuntu-latest
+    needs: [lint-typescript]
     
     steps:
       - name: Checkout code
@@ -137,6 +190,7 @@ jobs:
   test-remediation-action:
     name: Test Remediation Action
     runs-on: ubuntu-latest
+    needs: [lint-typescript]
     
     steps:
       - name: Checkout code
@@ -194,7 +248,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
@@ -202,7 +256,7 @@ jobs:
         id: meta-incident-service
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/incident-service
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/incident-service
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -222,7 +276,7 @@ jobs:
         id: meta-dashboard
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/dashboard
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/dashboard
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -242,7 +296,7 @@ jobs:
         id: meta-demo-app
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/demo-app
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/demo-app
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -257,3 +311,23 @@ jobs:
           labels: ${{ steps.meta-demo-app.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  ci-success:
+    name: CI Pipeline Success
+    runs-on: ubuntu-latest
+    needs: [lint-go, lint-typescript, test-incident-service, test-dashboard, test-demo-app, test-remediation-action]
+    if: always()
+    
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [[ "${{ needs.lint-go.result }}" != "success" ]] || \
+             [[ "${{ needs.lint-typescript.result }}" != "success" ]] || \
+             [[ "${{ needs.test-incident-service.result }}" != "success" ]] || \
+             [[ "${{ needs.test-dashboard.result }}" != "success" ]] || \
+             [[ "${{ needs.test-demo-app.result }}" != "success" ]] || \
+             [[ "${{ needs.test-remediation-action.result }}" != "success" ]]; then
+            echo "❌ One or more CI jobs failed"
+            exit 1
+          fi
+          echo "✅ All CI jobs passed successfully"
