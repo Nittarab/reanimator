@@ -190,20 +190,48 @@ cd remediation-action && npm test
 
 ## 🚢 Production Deployment
 
-1. Build and deploy:
+### Using Docker Compose
+
+1. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with production credentials
+```
+
+2. Build and start services:
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+3. Run database migrations:
+```bash
+docker-compose -f docker-compose.prod.yml exec incident-service ./migrate
+```
+
+4. View logs:
+```bash
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+5. Check service health:
+```bash
+curl http://localhost:8080/api/v1/health
+curl http://localhost:3001/health
+curl http://localhost:3002/api/health
+```
+
+### Using the Production Script
+
+Alternatively, use the provided script:
 ```bash
 ./scripts/prod.sh
 ```
 
-2. View logs:
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
-```
-
-3. Check service health:
-```bash
-curl http://localhost:8080/api/v1/health
-```
+This script will:
+- Build all Docker images
+- Start all services
+- Run database migrations
+- Display service URLs and health status
 
 ## 📊 Monitoring
 
@@ -228,6 +256,7 @@ Key metrics:
 
 ## 📚 Documentation
 
+- [Environment Variables Reference](ENVIRONMENT.md) - Complete guide to all environment variables
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Configuration Reference](docs/CONFIGURATION.md)
 - [Adding New Adapters](docs/ADAPTERS.md)

@@ -301,11 +301,128 @@ The integration tests use sample incident events and a test repository with inte
 
 See [remediation-action/tests/integration/README.md](remediation-action/tests/integration/README.md) for detailed documentation.
 
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment. The pipeline automatically runs on every push and pull request.
+
+### Pipeline Overview
+
+The CI pipeline consists of the following stages:
+
+1. **Linting** - Code quality checks
+   - Go: `golangci-lint` for incident-service
+   - TypeScript/JavaScript: ESLint for dashboard, demo-app, and remediation-action
+
+2. **Testing** - Automated test execution
+   - Incident Service: Go tests with race detector, PostgreSQL and Redis services
+   - Dashboard: Vitest tests with coverage
+   - Demo App: Vitest tests with coverage
+   - Remediation Action: Jest tests + integration tests
+
+3. **Coverage Reporting** - Code coverage uploaded to Codecov
+   - Target: >80% overall coverage
+   - Critical paths: 100% coverage (webhooks, remediation, database)
+
+4. **Docker Image Building** - Multi-stage builds (main branch only)
+   - Incident Service image
+   - Dashboard image
+   - Demo App image
+   - Images pushed to GitHub Container Registry (ghcr.io)
+
+### Workflow File
+
+The main CI workflow is defined in `.github/workflows/ci.yml`.
+
+### Running CI Locally
+
+**Lint Go Code:**
+```bash
+cd incident-service
+golangci-lint run --timeout=5m
+```
+
+**Lint TypeScript/JavaScript:**
+```bash
+# Dashboard
+cd dashboard && npm run lint
+
+# Demo App
+cd demo-app && npm run lint
+
+# Remediation Action
+cd remediation-action && npm run lint
+```
+
+**Run All Tests:**
+```bash
+./scripts/test.sh
+```
+
+**Build Docker Images Locally:**
+```bash
+# Incident Service
+docker build -t incident-service:local ./incident-service
+
+# Dashboard
+docker build -t dashboard:local ./dashboard
+
+# Demo App
+docker build -t demo-app:local ./demo-app
+```
+
+### CI Requirements for Pull Requests
+
+Before your PR can be merged:
+
+1. ✅ All linting checks must pass
+2. ✅ All tests must pass (unit, property-based, integration)
+3. ✅ Code coverage must not decrease
+4. ✅ Docker images must build successfully (for main branch)
+5. ✅ At least one code review approval
+
+### Viewing CI Results
+
+- Check the "Actions" tab in GitHub to see workflow runs
+- Click on a specific run to see detailed logs
+- Failed jobs will show error messages and stack traces
+- Coverage reports are available in Codecov
+
+### Manual Workflow Triggering
+
+You can manually trigger the CI pipeline:
+
+1. Go to the "Actions" tab
+2. Select "CI Pipeline"
+3. Click "Run workflow"
+4. Choose the branch and click "Run workflow"
+
+### Troubleshooting CI Failures
+
+**Linting Failures:**
+- Run linters locally to see the issues
+- Fix formatting and code quality issues
+- Commit and push the fixes
+
+**Test Failures:**
+- Check the test logs in the Actions tab
+- Run tests locally to reproduce: `./scripts/test.sh`
+- Fix the failing tests and push
+
+**Docker Build Failures:**
+- Verify Dockerfiles are correct
+- Test builds locally: `docker build -t test ./service-name`
+- Check for missing dependencies or incorrect paths
+
+**Coverage Drops:**
+- Add tests for new code
+- Ensure property-based tests run 100+ iterations
+- Check coverage locally: `go test -coverprofile=coverage.out ./...`
+
 ## Code Review Process
 
 1. All changes require a pull request
 2. At least one approval required
-3. All tests must pass
+3. All CI checks must pass
 4. Code coverage should not decrease
 5. Documentation must be updated
 
