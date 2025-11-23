@@ -1,12 +1,46 @@
 version: '3.8'
 
+name: ai-sre-platform-dev
+
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai-sre-postgres-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_sre
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-sre-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-sre-redis-dev
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-sre-network
+
   incident-service:
     build:
       context: ./incident-service
       dockerfile: Dockerfile
       target: development
-    container_name: ai-sre-incident-service
+    container_name: ai-sre-incident-service-dev
     ports:
       - "8080:8080"
       - "9090:9090"
@@ -40,7 +74,7 @@ services:
       context: ./dashboard
       dockerfile: Dockerfile
       target: development
-    container_name: ai-sre-dashboard
+    container_name: ai-sre-dashboard-dev
     ports:
       - "3001:3001"
     environment:
@@ -59,7 +93,7 @@ services:
       context: ./demo-app
       dockerfile: Dockerfile
       target: development
-    container_name: ai-sre-demo-app
+    container_name: ai-sre-demo-app-dev
     ports:
       - "3002:3002"
     environment:
@@ -71,3 +105,10 @@ services:
     networks:
       - ai-sre-network
     command: npm run dev
+
+volumes:
+  postgres_data_dev:
+
+networks:
+  ai-sre-network:
+    driver: bridge
