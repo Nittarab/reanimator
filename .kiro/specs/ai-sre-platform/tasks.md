@@ -276,7 +276,7 @@
   - Test end-to-end flow
   - _Requirements: Demo Application, 22.2_
 
-- [ ] 25. Create Docker infrastructure
+- [x] 25. Create Docker infrastructure
   - Write Dockerfile for Incident Service with multi-stage build
   - Write Dockerfile for Dashboard with multi-stage build
   - Write Dockerfile for Demo App
@@ -285,14 +285,14 @@
   - Add health checks to all containers
   - _Requirements: 9.1, 10.1_
 
-- [ ] 26. Create deployment scripts
+- [x] 26. Create deployment scripts
   - Write scripts/dev.sh for local development
   - Write scripts/test.sh for running all tests
   - Create .env.example with all required variables
   - Document environment variable requirements
   - _Requirements: 10.3, 10.4_
 
-- [ ] 27. Set up CI/CD pipeline
+- [x] 27. Set up CI/CD pipeline
   - Create .github/workflows/ci.yml for testing
   - Add test jobs for Incident Service (Go)
   - Add test jobs for Dashboard (TypeScript)
