@@ -3,6 +3,9 @@ FROM node:20-alpine AS development
 
 WORKDIR /app
 
+# Install wget for health checks
+RUN apk --no-cache add wget
+
 # Copy package files
 COPY package*.json ./
 
@@ -13,10 +16,10 @@ RUN npm ci
 COPY . .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3001
 
 # Development mode - will be overridden by docker-compose
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3001"]
 
 # Build stage
 FROM node:20-alpine AS builder
@@ -38,6 +41,9 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine AS production
 
+# Install wget for health checks
+RUN apk --no-cache add wget
+
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -48,7 +54,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=10s \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

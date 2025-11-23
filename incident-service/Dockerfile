@@ -31,8 +31,11 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the server application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o incident-service cmd/server/main.go
+
+# Build the migration tool
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o migrate cmd/migrate/main.go
 
 # Production stage
 FROM alpine:latest AS production
@@ -41,10 +44,14 @@ RUN apk --no-cache add ca-certificates wget
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binaries from builder
 COPY --from=builder /app/incident-service .
+COPY --from=builder /app/migrate .
 
-# Expose ports
+# Copy migrations
+COPY --from=builder /app/migrations ./migrations
+
+# Expose ports (8080 for API, 9090 for metrics)
 EXPOSE 8080 9090
 
 # Health check
