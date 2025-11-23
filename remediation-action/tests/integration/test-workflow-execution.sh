@@ -1,8 +1,8 @@
 #!/bin/bash
-set -e
 
 # Comprehensive integration test for workflow execution
 # Tests context file creation, branch naming, and workflow structure
+# Note: Not using 'set -e' to allow all tests to run even if some fail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/../fixtures"
@@ -63,6 +63,13 @@ test_workflow_structure() {
 test_context_file_creation() {
     echo -e "${BLUE}Test 2: Context file creation${NC}"
     
+    # Check if jq is available
+    if ! command -v jq &> /dev/null; then
+        echo -e "${YELLOW}⚠ SKIPPED: jq not installed${NC}"
+        echo ""
+        return 0
+    fi
+    
     # Simulate context file creation
     local temp_dir=$(mktemp -d)
     local context_file="$temp_dir/incident-context.json"
@@ -71,14 +78,19 @@ test_context_file_creation() {
     local incident_file="$FIXTURES_DIR/incident-events/simple-error.json"
     
     if [ ! -f "$incident_file" ]; then
-        echo -e "${RED}✗ FAILED: Test incident file not found${NC}"
+        echo -e "${RED}✗ FAILED: Test incident file not found at $incident_file${NC}"
         ((TESTS_FAILED++))
         rm -rf "$temp_dir"
         return 1
     fi
     
     # Create context file (simulating what the action does)
-    cp "$incident_file" "$context_file"
+    if ! cp "$incident_file" "$context_file" 2>/dev/null; then
+        echo -e "${RED}✗ FAILED: Could not copy incident file${NC}"
+        ((TESTS_FAILED++))
+        rm -rf "$temp_dir"
+        return 1
+    fi
     
     # Verify context file has required fields
     local required_fields=("incident_id" "error_message" "service_name" "timestamp")
@@ -126,10 +138,17 @@ test_branch_naming() {
 test_mcp_config() {
     echo -e "${BLUE}Test 4: MCP configuration handling${NC}"
     
+    # Check if jq is available
+    if ! command -v jq &> /dev/null; then
+        echo -e "${YELLOW}⚠ SKIPPED: jq not installed${NC}"
+        echo ""
+        return 0
+    fi
+    
     local mcp_file="$TEST_REPO/.kiro/settings/mcp.json"
     
     if [ ! -f "$mcp_file" ]; then
-        echo -e "${RED}✗ FAILED: MCP config file not found${NC}"
+        echo -e "${RED}✗ FAILED: MCP config file not found at $mcp_file${NC}"
         ((TESTS_FAILED++))
         return 1
     fi
@@ -181,6 +200,13 @@ test_repo_structure() {
 # Test 6: Verify incident event fixtures
 test_incident_fixtures() {
     echo -e "${BLUE}Test 6: Incident event fixtures${NC}"
+    
+    # Check if jq is available
+    if ! command -v jq &> /dev/null; then
+        echo -e "${YELLOW}⚠ SKIPPED: jq not installed${NC}"
+        echo ""
+        return 0
+    fi
     
     local fixtures=(
         "$FIXTURES_DIR/incident-events/simple-error.json"
