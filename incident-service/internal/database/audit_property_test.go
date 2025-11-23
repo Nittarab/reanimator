@@ -320,7 +320,8 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 			// Small delay to ensure cleanup is complete
 			time.Sleep(10 * time.Millisecond)
 
-			now := time.Now()
+			// Truncate to microseconds to match PostgreSQL timestamp precision
+			now := time.Now().Truncate(time.Microsecond)
 			
 			// Create incidents with different timestamps
 			for i := 0; i < numIncidents; i++ {
