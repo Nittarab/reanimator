@@ -129,12 +129,39 @@ The demo UI has three main views:
 
 ## Testing with AI SRE Platform
 
+### Quick Start
+
 1. **Configure Sentry**: Set `SENTRY_DSN` environment variable
 2. **Start the demo app**: `npm start`
 3. **Trigger a bug**: Use the web UI or call buggy endpoints directly
 4. **Watch Sentry**: Error should appear in your Sentry dashboard
 5. **AI SRE Platform**: Should receive webhook and trigger remediation workflow
 6. **Review PR**: Check GitHub for automatically generated fix pull request
+
+### Testing the Remediation Workflow
+
+The demo application includes a GitHub Actions workflow that demonstrates automated incident remediation:
+
+**Quick Test** (2 minutes):
+```bash
+# Test workflow configuration locally
+cd demo-app
+./scripts/test-workflow-locally.sh
+
+# Then trigger manually in GitHub:
+# Actions → Demo Remediation Workflow → Run workflow
+```
+
+**Documentation**:
+- 📖 [Quick Test Guide](.github/QUICK-TEST-GUIDE.md) - Fast 5-minute setup and test
+- 📚 [Full Setup Guide](.github/DEMO-WORKFLOW-SETUP.md) - Detailed configuration and troubleshooting
+
+**Required GitHub Secrets**:
+- `SENTRY_AUTH_TOKEN` - Sentry API token
+- `SENTRY_ORG` - Your Sentry organization slug
+- `SENTRY_PROJECT` - Your Sentry project slug
+
+See the guides above for step-by-step instructions.
 
 ## Database Schema
 
