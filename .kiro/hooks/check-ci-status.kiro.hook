@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Check CI Status & Logs",
+  "description": "Get the status of the latest CI run and retrieve failure logs for debugging",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check the CI pipeline status and retrieve logs using the following approach:\n\n1. Get the latest CI run status:\n   ```bash\n   gh run list --limit 5 --json status,conclusion,name,headBranch,createdAt,databaseId,event > /tmp/ci_runs.json 2>&1 && cat /tmp/ci_runs.json\n   ```\n   This redirects output to a file to avoid pager issues.\n\n2. Parse the JSON to identify the latest run ID (databaseId field).\n\n3. Get detailed information about the latest run:\n   ```bash\n   gh run view <RUN_ID> --json status,conclusion,name,headBranch,createdAt,jobs > /tmp/ci_details.json 2>&1 && cat /tmp/ci_details.json\n   ```\n\n4. If the run failed, get the logs:\n   ```bash\n   gh run view <RUN_ID> --log > /tmp/ci_logs.txt 2>&1 && cat /tmp/ci_logs.txt\n   ```\n   Or for a specific failed job:\n   ```bash\n   gh run view <RUN_ID> --log-failed > /tmp/ci_failed_logs.txt 2>&1 && cat /tmp/ci_failed_logs.txt\n   ```\n\n5. Summarize:\n   - CI run status (success/failure)\n   - Which jobs failed\n   - Key error messages from logs\n   - Suggested fixes based on the errors\n\nAlways redirect output to temporary files to avoid terminal pager issues with gh CLI."
+  },
+  "workspaceFolderName": "reanimator",
+  "shortName": "check-ci-status"
+}
