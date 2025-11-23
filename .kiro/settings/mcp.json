@@ -5,14 +5,8 @@
 			"command": "npx",
 			"args": [
 				"chrome-devtools-mcp@latest",
-				"--browserUrl",
-				"${input:browser_url}",
 				"--headless",
-				"${input:headless}",
-				"--isolated",
-				"${input:isolated = true",
-				"--channel",
-				"${input:chrome_channel}"
+				"--isolated"
 			],
 			"gallery": "https://api.mcp.github.com",
 			"version": "0.0.1-seed"

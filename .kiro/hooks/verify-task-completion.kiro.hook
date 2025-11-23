@@ -8,6 +8,8 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "Review the task that was just completed. First, verify that the scope of the task is actually complete by checking:\n1. All requested functionality has been implemented\n2. Code follows the project's conventions and patterns\n3. Tests have been added or updated as needed\n4. Documentation has been updated if necessary\n\nIf the task is complete, create atomic commits that logically group related changes. Each commit should:\n- Have a clear, descriptive commit message\n- Contain a single logical change\n- Be independently reviewable\n- Help future developers understand the evolution of the code\n\nuse --no-pager to get the ourput directly in console for the git command \n\nStructure your commits to tell a story of what was built and why, making future code revisions and debugging easier."
-  }
+    "prompt": "Review the task that was just completed. First, verify that the scope of the task is actually complete by checking:\n1. All requested functionality has been implemented\n2. Code follows the project's conventions and patterns\n3. Tests have been added or updated as needed\n4. Documentation has been updated if necessary\n\nIf the task is complete, create atomic commits that logically group related changes. Each commit should:\n- Have a clear, descriptive commit message\n- Contain a single logical change\n- Be independently reviewable\n- Help future developers understand the evolution of the code\n\nuse --no-pager to get the ourput directly in console for the git command \nuse tmp file for long commit message description\n\nStructure your commits to tell a story of what was built and why, making future code revisions and debugging easier."
+  },
+  "workspaceFolderName": "auto-fixing-background-agents",
+  "shortName": "verify-task-completion"
 }
