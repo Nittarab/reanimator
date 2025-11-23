@@ -155,28 +155,28 @@ func setupTestDB(t *testing.T) *DB {
 	// Verify connection
 	if err := db.Ping(); err != nil {
 		t.Logf("failed to ping test database: %v (skipping test)", err)
-		db.Close()
+		_ = db.Close()
 		return nil
 	}
 
 	// Create test schema
 	if err := setupTestSchema(db); err != nil {
 		t.Logf("failed to setup test schema: %v (skipping test)", err)
-		db.Close()
+		_ = db.Close()
 		return nil
 	}
 
 	// Clean up before test
 	if err := cleanupTestData(db); err != nil {
 		t.Logf("failed to cleanup test data: %v (skipping test)", err)
-		db.Close()
+		_ = db.Close()
 		return nil
 	}
 
 	// Register cleanup
 	t.Cleanup(func() {
-		cleanupTestData(db)
-		db.Close()
+		_ = cleanupTestData(db)
+		_ = db.Close()
 	})
 
 	return &DB{db}
