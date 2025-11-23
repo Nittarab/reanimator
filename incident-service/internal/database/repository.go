@@ -223,6 +223,7 @@ func (r *IncidentRepository) ListWithFilter(filter *IncidentFilter) ([]*models.I
 			argCount++
 		}
 	}
+	_ = argCount // argCount is used for building query parameters
 
 	query += " ORDER BY created_at DESC"
 
@@ -501,6 +502,7 @@ func (r *IncidentRepository) GetStatistics(filter *IncidentFilter) (*IncidentSta
 			argCount++
 		}
 	}
+	_ = argCount // argCount is used for building query parameters
 
 	var stats IncidentStatistics
 	var avgResolutionTime sql.NullFloat64

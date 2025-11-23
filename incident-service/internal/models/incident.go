@@ -60,5 +60,8 @@ func (j *JSONB) Scan(value interface{}) error {
 	if !ok {
 		return nil
 	}
-	return json.Unmarshal(bytes, j)
+	if err := json.Unmarshal(bytes, j); err != nil {
+		return err
+	}
+	return nil
 }

@@ -46,7 +46,7 @@ func TestProperty6_WorkflowDispatchIncludesRequiredContext(t *testing.T) {
 			var capturedRequest WorkflowDispatchRequest
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				body, _ := io.ReadAll(r.Body)
-				json.Unmarshal(body, &capturedRequest)
+				_ = json.Unmarshal(body, &capturedRequest)
 				w.WriteHeader(http.StatusNoContent)
 			}))
 			defer server.Close()

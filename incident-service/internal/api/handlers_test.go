@@ -72,8 +72,8 @@ func TestHandleWorkflowStatus_Success(t *testing.T) {
 
 	// Clean up after test
 	defer func() {
-		db.Exec("DELETE FROM incident_events WHERE incident_id = $1", incident.ID)
-		db.Exec("DELETE FROM incidents WHERE id = $1", incident.ID)
+		_, _ = db.Exec("DELETE FROM incident_events WHERE incident_id = $1", incident.ID)
+		_, _ = db.Exec("DELETE FROM incidents WHERE id = $1", incident.ID)
 	}()
 
 	// Create workflow status payload
@@ -179,8 +179,8 @@ func TestHandleWorkflowStatus_Failed(t *testing.T) {
 
 	// Clean up after test
 	defer func() {
-		db.Exec("DELETE FROM incident_events WHERE incident_id = $1", incident.ID)
-		db.Exec("DELETE FROM incidents WHERE id = $1", incident.ID)
+		_, _ = db.Exec("DELETE FROM incident_events WHERE incident_id = $1", incident.ID)
+		_, _ = db.Exec("DELETE FROM incidents WHERE id = $1", incident.ID)
 	}()
 
 	// Create workflow status payload with failed status

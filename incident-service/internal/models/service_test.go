@@ -227,7 +227,9 @@ func TestIncidentStatusTransitions(t *testing.T) {
 			}
 
 			// Create the incident in the repo
-			repo.Create(incident)
+			if err := repo.Create(incident); err != nil {
+				t.Fatalf("failed to create incident: %v", err)
+			}
 
 			err := service.TransitionStatus(incident, tt.toStatus)
 

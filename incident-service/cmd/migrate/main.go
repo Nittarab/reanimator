@@ -29,7 +29,7 @@ func main() {
 		cfg.Database.Host = testHost
 	}
 	if testPort := os.Getenv("TEST_DATABASE_PORT"); testPort != "" {
-		fmt.Sscanf(testPort, "%d", &cfg.Database.Port)
+		_, _ = fmt.Sscanf(testPort, "%d", &cfg.Database.Port)
 	}
 	if testDB := os.Getenv("TEST_DATABASE_NAME"); testDB != "" {
 		cfg.Database.Database = testDB
