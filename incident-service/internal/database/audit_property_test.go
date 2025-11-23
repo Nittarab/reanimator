@@ -40,7 +40,13 @@ func TestProperty_AuditTrailCompleteness(t *testing.T) {
 	properties.Property("audit trail contains all state transitions", prop.ForAll(
 		func(numTransitions int) bool {
 			// Clean up before each test iteration
-			cleanupTestData(db.DB)
+			if err := cleanupTestData(db.DB); err != nil {
+				t.Logf("Failed to cleanup: %v", err)
+				return false
+			}
+
+			// Small delay to ensure cleanup is complete
+			time.Sleep(10 * time.Millisecond)
 
 			// Generate a unique incident ID
 			incidentID := generateIncidentID()
@@ -166,7 +172,13 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 	properties.Property("filtered incidents match filter criteria", prop.ForAll(
 		func(incidents []testIncident, filterStatus models.IncidentStatus) bool {
 			// Clean up before each test iteration
-			cleanupTestData(db.DB)
+			if err := cleanupTestData(db.DB); err != nil {
+				t.Logf("Failed to cleanup: %v", err)
+				return false
+			}
+
+			// Small delay to ensure cleanup is complete
+			time.Sleep(10 * time.Millisecond)
 
 			// Create all incidents
 			for _, inc := range incidents {
@@ -185,6 +197,9 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 					return false
 				}
 			}
+
+			// Small delay to ensure all writes are committed
+			time.Sleep(10 * time.Millisecond)
 
 			// Apply filter by status
 			filter := &IncidentFilter{
@@ -227,7 +242,13 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 	properties.Property("filtered incidents by service name match criteria", prop.ForAll(
 		func(incidents []testIncident, filterService string) bool {
 			// Clean up before each test iteration
-			cleanupTestData(db.DB)
+			if err := cleanupTestData(db.DB); err != nil {
+				t.Logf("Failed to cleanup: %v", err)
+				return false
+			}
+
+			// Small delay to ensure cleanup is complete
+			time.Sleep(10 * time.Millisecond)
 
 			// Create all incidents
 			for _, inc := range incidents {
@@ -246,6 +267,9 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 					return false
 				}
 			}
+
+			// Small delay to ensure all writes are committed
+			time.Sleep(10 * time.Millisecond)
 
 			// Apply filter by service name
 			filter := &IncidentFilter{
@@ -288,7 +312,13 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 	properties.Property("filtered incidents by time range match criteria", prop.ForAll(
 		func(numIncidents int) bool {
 			// Clean up before each test iteration
-			cleanupTestData(db.DB)
+			if err := cleanupTestData(db.DB); err != nil {
+				t.Logf("Failed to cleanup: %v", err)
+				return false
+			}
+
+			// Small delay to ensure cleanup is complete
+			time.Sleep(10 * time.Millisecond)
 
 			now := time.Now()
 			
@@ -317,6 +347,9 @@ func TestProperty_IncidentFilteringCorrectness(t *testing.T) {
 					return false
 				}
 			}
+
+			// Small delay to ensure all writes are committed
+			time.Sleep(10 * time.Millisecond)
 
 			// Filter for incidents in the last 3 hours
 			startTime := now.Add(-3 * time.Hour)
@@ -413,7 +446,13 @@ func TestProperty_StatisticsComputationAccuracy(t *testing.T) {
 	properties.Property("success rate is correctly computed", prop.ForAll(
 		func(resolvedCount, failedCount, pendingCount int) bool {
 			// Clean up before each test iteration
-			cleanupTestData(db.DB)
+			if err := cleanupTestData(db.DB); err != nil {
+				t.Logf("Failed to cleanup: %v", err)
+				return false
+			}
+
+			// Small delay to ensure cleanup is complete
+			time.Sleep(10 * time.Millisecond)
 
 			// Create incidents with different statuses
 			totalCount := resolvedCount + failedCount + pendingCount
@@ -518,7 +557,13 @@ func TestProperty_StatisticsComputationAccuracy(t *testing.T) {
 	properties.Property("mean time to resolve is correctly computed", prop.ForAll(
 		func(numIncidents int) bool {
 			// Clean up before each test iteration
-			cleanupTestData(db.DB)
+			if err := cleanupTestData(db.DB); err != nil {
+				t.Logf("Failed to cleanup: %v", err)
+				return false
+			}
+
+			// Small delay to ensure cleanup is complete
+			time.Sleep(10 * time.Millisecond)
 
 			now := time.Now()
 			var totalSeconds float64

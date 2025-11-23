@@ -250,11 +250,20 @@ func setupTestSchema(db *sql.DB) error {
 // cleanupTestData removes all test data
 func cleanupTestData(db *sql.DB) error {
 	// Delete in order due to foreign key constraints
-	_, err := db.Exec("DELETE FROM incident_events")
+	// Use TRUNCATE for faster cleanup and to reset sequences
+	_, err := db.Exec("TRUNCATE TABLE incident_events CASCADE")
 	if err != nil {
-		return err
+		// Fallback to DELETE if TRUNCATE fails
+		_, err = db.Exec("DELETE FROM incident_events")
+		if err != nil {
+			return err
+		}
 	}
-	_, err = db.Exec("DELETE FROM incidents")
+	_, err = db.Exec("TRUNCATE TABLE incidents CASCADE")
+	if err != nil {
+		// Fallback to DELETE if TRUNCATE fails
+		_, err = db.Exec("DELETE FROM incidents")
+	}
 	return err
 }
 
