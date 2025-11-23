@@ -4,156 +4,261 @@ inclusion: always
 
 # Project Structure & Code Organization
 
-## Monorepo Components
+## Monorepo Layout
 
-- `incident-service/` - Go backend (Chi, PostgreSQL, Redis)
-- `dashboard/` - React frontend (Vite, shadcn/ui, TanStack Query)
-- `demo-app/` - Node.js demo service
-- `remediation-action/` - GitHub Action for remediation
+```
+incident-service/     Go backend (Chi, PostgreSQL, Redis)
+├── cmd/             Entrypoints (server, migrate)
+├── internal/        Private application code
+│   ├── adapters/    Provider webhook normalization (Adapter pattern)
+│   ├── api/         HTTP handlers, middleware
+│   ├── config/      Configuration management
+│   ├── database/    Repository pattern, Redis
+│   ├── github/      GitHub API client
+│   └── models/      Domain models
+└── migrations/      Sequential SQL migrations
+
+dashboard/           React frontend (Vite, TypeScript, TanStack Query)
+├── src/
+│   ├── api/         API client functions
+│   ├── components/  React components (shadcn/ui)
+│   ├── pages/       Page components
+│   └── lib/         Utilities
+
+remediation-action/  GitHub Action (TypeScript)
+├── src/             Action implementation
+└── tests/           Integration tests
+
+demo-app/            Demo Node.js service
+```
 
 ## File Placement
 
-### incident-service/ (Go)
+### Go (incident-service/)
 
-- Handlers: `internal/api/handlers.go`
-- Adapters: `internal/adapters/{provider}.go` (implement `Adapter` interface)
-- Database: `internal/database/repository.go` (implement `Repository` interface)
-- Models: `internal/models/`
-- Tests: colocate as `*_test.go`, property tests as `*_property_test.go`
-- Migrations: `migrations/001_description.sql` (sequential numbering)
+**Webhook provider**: `internal/adapters/{provider}.go`
+- Implement `Adapter` interface: `ParseWebhook([]byte) (*models.Incident, error)`
+- Colocate test: `{provider}_test.go`
 
-### dashboard/ (React)
+**API endpoint**: `internal/api/handlers.go`
+- Add handler function
+- Register route in `cmd/server/main.go`
 
-- UI components: `src/components/ui/` (shadcn/ui)
-- Pages: `src/pages/{Name}Page.tsx`
-- API clients: `src/api/{resource}.ts`
-- Tests: colocate as `*.test.ts` or `*.test.tsx`, property tests as `*.property.test.ts`
-- Always use `@/` alias for imports from `src/`
+**Model**: `internal/models/{entity}.go`
+- Include validation methods
+- Colocate test: `{entity}_test.go`
 
-### remediation-action/ (TypeScript)
+**Database changes**:
+- Migration: `migrations/00X_description.sql` (next sequential number)
+- Update: `internal/database/repository.go` interface and implementation
 
-- Action logic: `src/main.ts`
-- GitHub API: `src/github.ts`
-- Kiro CLI: `src/kiro.ts`
+**Tests**: Always colocate with source
+- Unit: `*_test.go`
+- Property: `*_property_test.go`
+
+### TypeScript/React (dashboard/)
+
+**Page**: `src/pages/{Name}Page.tsx`
+- Add route in `src/App.tsx`
+- Colocate test: `{Name}Page.test.tsx`
+
+**API function**: `src/api/{resource}.ts`
+- Export typed functions
+- Colocate test: `{resource}.test.ts`
+
+**UI component**: `src/components/ui/{name}.tsx`
+- Use shadcn/ui patterns
+- Export as named function
+
+**CRITICAL**: Always use `@/` alias for internal imports
+```typescript
+import { getIncidents } from '@/api/incidents'  // ✓ CORRECT
+import { getIncidents } from '../api/incidents' // ✗ WRONG
+```
+
+### TypeScript (remediation-action/)
+
+- Entrypoint: `src/index.ts`
+- Integrations: `src/github.ts`, `src/kiro.ts`, `src/mcp.ts`
+- Tests: `*.test.ts`, property tests: `*.property.test.ts`
 
 ## Naming Conventions
 
-| Context | Convention | Example |
-|---------|-----------|---------|
-| Go exported | PascalCase | `CreateIncident` |
-| Go unexported | camelCase | `parseWebhook` |
-| Go interfaces | Noun/adjective | `Repository`, `Adapter` |
-| TS/JS variables/functions | camelCase | `getIncidents` |
-| TS/JS components/classes | PascalCase | `IncidentCard` |
-| TS/JS constants | UPPER_SNAKE_CASE | `API_BASE_URL` |
-| Files | kebab-case | `incident-detail-page.tsx` |
-| React components (exception) | PascalCase.tsx | `IncidentCard.tsx` |
-| Database tables/columns | snake_case | `incident_events` |
-| API endpoints | kebab-case | `/api/v1/workflow-status` |
+**Go**:
+- Exported: `PascalCase` (functions, types, constants)
+- Unexported: `camelCase` (private functions, variables)
+- Interfaces: Noun/adjective (`Repository`, `Adapter`)
+- Tests: `TestFunctionName_Scenario` (e.g., `TestParseWebhook_InvalidJSON`)
+
+**TypeScript/JavaScript**:
+- Variables/functions: `camelCase` (`getIncidents`, `userId`)
+- Components/classes: `PascalCase` (`IncidentCard`, `ApiClient`)
+- Constants: `UPPER_SNAKE_CASE` (`API_BASE_URL`, `MAX_RETRIES`)
+- Types/interfaces: `PascalCase` (`IncidentResponse`, `WebhookPayload`)
+
+**Files**:
+- General: `kebab-case` (`incident-detail.ts`, `webhook-handler.go`)
+- React components: `PascalCase.tsx` (`IncidentCard.tsx`)
+- Tests: Match source + suffix (`handlers_test.go`, `incidents.test.ts`)
+- Property tests: Add `.property` before `.test` (`rules_property_test.go`)
+
+**Database**: `snake_case` (`incident_events`, `created_at`)
+
+**API**: `kebab-case` with `/api/v1/` prefix (`/api/v1/workflow-status`)
 
 ## Import Organization
 
-**Go** - Three groups with blank line separators:
+**Go** (3 groups, blank line separated, alphabetical):
 ```go
 import (
-    // Standard library
+    // 1. Standard library
     "context"
+    "fmt"
     
-    // External dependencies
+    // 2. External dependencies
     "github.com/go-chi/chi/v5"
     
-    // Internal (alphabetical)
+    // 3. Internal packages
     "github.com/your-org/ai-sre-platform/internal/models"
 )
 ```
 
-**TypeScript** - Two groups:
+**TypeScript/React** (2 groups, blank line separated):
 ```typescript
-// External
+// 1. External packages
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
-// Internal (use @/ alias)
+// 2. Internal modules (MUST use @/ alias)
 import { getIncidents } from '@/api/incidents'
+import { Button } from '@/components/ui/button'
 ```
 
-## Testing Requirements
+## Testing
 
-- Colocate tests with source files
-- Property tests: minimum 100 iterations, mark with `// Property: description`
-- Go naming: `func TestFunctionName_Scenario(t *testing.T)`
-- TypeScript naming: `describe('functionName', () => { it('should scenario', ...) })`
+**Placement**: Always colocate tests with source
+- `handlers.go` → `handlers_test.go`
+- `incidents.ts` → `incidents.test.ts`
+- Property: `rules_property_test.go`, `notifications.property.test.ts`
+
+**Go**:
+- Naming: `func TestFunctionName_Scenario(t *testing.T)`
+- Property tests: `gopter`, 100+ iterations, mark with `// Property: invariant description`
+- Run: `go test -v -race ./...`
+
+**TypeScript**:
+- Structure: `describe('functionName', () => { it('should scenario', ...) })`
+- Property tests: `fast-check`, 100+ iterations
+- React: Vitest + React Testing Library
+
+**Coverage**: >80% overall, 100% for critical paths (webhooks, remediation)
 
 ## Architecture Patterns
 
-**Adapter Pattern**: Normalize provider webhooks
-- Each provider: `internal/adapters/{provider}.go`
-- Implements `Adapter` interface
-- Converts to internal `Incident` model
+**Adapter Pattern** (webhook normalization):
+- Location: `internal/adapters/{provider}.go`
+- Interface: `ParseWebhook([]byte) (*models.Incident, error)`
+- Converts provider payloads to internal `Incident` model
+- Examples: `datadog.go`, `pagerduty.go`, `sentry.go`
 
-**Repository Pattern**: Abstract database access
-- All queries through `Repository` interface
-- Enables mock testing
+**Repository Pattern** (database abstraction):
+- Location: `internal/database/repository.go`
+- ALL database queries MUST go through `Repository` interface
+- Enables test mocking without real database
+- Always pass `context.Context` for cancellation/timeouts
 
-**Event-Driven**: Incident state changes
-- Events in `incident_events` table
-- Provides audit trail
+**Event-Driven Architecture** (audit trail):
+- State changes recorded in `incident_events` table
+- Events: `created`, `workflow_triggered`, `pr_opened`, `resolved`
 
-**Queue-Based Dispatch**: Control workflow concurrency
-- Redis-backed queue
-- Respects `max_concurrent_workflows`
+**Queue-Based Dispatch** (concurrency control):
+- Redis-backed queue for workflow triggers
+- Respects `max_concurrent_workflows` from config
 
-## Configuration Files
+## Configuration
 
-- `config.yaml`: Service mappings, MCP servers, concurrency limits
-- `.env`: Secrets (never commit)
-- Repository secrets: GitHub Actions credentials (set via UI)
+**config.yaml** (committed to repo):
+- Service-to-repository mappings
+- MCP server configurations
+- `max_concurrent_workflows`, deduplication windows
+
+**.env** (NEVER commit):
+- Database URLs, API keys, tokens
+- Use `.env.example` as template
+
+**GitHub Secrets** (Settings → Secrets and variables → Actions):
+- Used by remediation-action workflows
+- Examples: `GITHUB_TOKEN`, `INCIDENT_SERVICE_URL`
 
 ## Database Migrations
 
-- Location: `incident-service/migrations/`
-- Format: `001_description.sql` (sequential)
-- Run: `go run cmd/migrate/main.go`
-- Always include up and down migrations
+**Location**: `incident-service/migrations/`
 
-## Code Patterns
+**Naming**: `{number}_{description}.sql` (sequential, zero-padded)
+- Examples: `001_create_incidents.sql`, `002_create_incident_events.sql`
 
-**Go error handling:**
+**Apply**: `go run cmd/migrate/main.go`
+
+## Required Patterns
+
+### Go
+
+**Error handling** (ALWAYS wrap with %w):
 ```go
 if err != nil {
-    return fmt.Errorf("context: %w", err)
+    return fmt.Errorf("failed to parse webhook: %w", err)
 }
 ```
 
-**Go HTTP responses:**
+**HTTP responses** (REQUIRED order: header → status → body):
 ```go
 w.Header().Set("Content-Type", "application/json")
 w.WriteHeader(http.StatusOK)
 json.NewEncoder(w).Encode(response)
 ```
 
-**TypeScript data fetching:**
+**Context passing** (REQUIRED for all I/O):
+```go
+func (r *Repository) GetIncident(ctx context.Context, id string) (*Incident, error)
+```
+
+### TypeScript/React
+
+**Data fetching** (ONLY use TanStack Query):
 ```typescript
 const { data, isLoading, error } = useQuery({
   queryKey: ['incidents', filters],
   queryFn: () => getIncidents(filters)
 })
+// NEVER use manual fetch() in components
 ```
 
-**React components:**
+**Component structure** (typed props, named export):
 ```typescript
 interface ComponentProps {
-  prop: Type
+  incidentId: string
+  onUpdate?: () => void
 }
 
-export function Component({ prop }: ComponentProps) {
-  // Logic
+export function IncidentCard({ incidentId, onUpdate }: ComponentProps) {
+  // Implementation
 }
 ```
 
-## Adding Features
+**API functions** (typed, exported):
+```typescript
+export async function getIncidents(filters?: IncidentFilters): Promise<Incident[]> {
+  const response = await apiClient.get('/incidents', { params: filters })
+  return response.data
+}
+```
 
-- **Webhook provider**: Add `internal/adapters/{provider}.go` implementing `Adapter`
-- **API endpoint**: Add to `internal/api/handlers.go`, register in `cmd/server/main.go`
-- **Database table**: Create migration, update `repository.go`
-- **UI page**: Create `src/pages/{Name}Page.tsx`, add route in `App.tsx`
-- **Config option**: Update `config.yaml` and `internal/config/config.go`
+## Quick Reference: Adding Features
+
+| Feature | Files to Create/Update |
+|---------|------------------------|
+| Webhook provider | `internal/adapters/{provider}.go` (implement `Adapter`), `{provider}_test.go` |
+| API endpoint | `internal/api/handlers.go` (add handler), `cmd/server/main.go` (register route) |
+| Database table | `migrations/00X_description.sql`, `internal/database/repository.go` |
+| UI page | `src/pages/{Name}Page.tsx`, `src/App.tsx` (add route), `{Name}Page.test.tsx` |
+| Config option | `config.yaml`, `internal/config/config.go` |

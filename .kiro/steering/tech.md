@@ -6,147 +6,250 @@ inclusion: always
 
 ## Go (incident-service/)
 
-**Stack**: Go 1.21+, Chi router, PostgreSQL 15+, Redis 7+
+**Stack**: Go 1.21+, Chi router, PostgreSQL 15+, Redis 7+, standard library preferred
 
-**Critical Patterns**:
-- Error wrapping: `fmt.Errorf("context: %w", err)` for all errors
-- HTTP handlers: set Content-Type → write status → encode JSON
-- Always pass `context.Context` for I/O operations (cancellation/timeouts)
-- All database queries through `Repository` interface (enables mocking)
-- Test with race detector: `go test -v -race ./...`
+### Critical Patterns (REQUIRED)
 
-**Testing**:
-- Unit tests: standard `testing` package, naming `TestFunctionName_Scenario`
-- Property tests: `gopter` library, suffix `*_property_test.go`, min 100 iterations
-- Mark properties: `// Property: description of invariant`
+**Error Handling**: Always wrap errors with context using `%w` verb
+```go
+if err != nil {
+    return fmt.Errorf("failed to parse webhook: %w", err)
+}
+```
+
+**HTTP Response Order**: Header → Status → Body (this exact order)
+```go
+w.Header().Set("Content-Type", "application/json")
+w.WriteHeader(http.StatusOK)
+json.NewEncoder(w).Encode(response)
+```
+
+**Context Passing**: First parameter for all I/O operations
+```go
+func (r *Repository) GetIncident(ctx context.Context, id string) (*Incident, error)
+```
+
+**Repository Pattern**: ALL database queries through `internal/database/repository.go` interface. Never use direct SQL in handlers or business logic.
+
+### Testing
+
+- Unit: Standard `testing` package, naming `TestFunctionName_Scenario`
+- Property: `gopter` library, suffix `*_property_test.go`, 100+ iterations, mark with `// Property: invariant description`
 - Colocate tests with source files
+- Always run with race detector: `go test -v -race ./...`
 
-**Database**:
+### Database
+
 - PostgreSQL JSON columns for flexible metadata
-- Migrations: `migrations/001_description.sql` (sequential numbering)
-- Run: `go run cmd/migrate/main.go`
-
-**Dependencies**: Chi (routing), lib/pq (PostgreSQL), go-redis (Redis). Prefer stdlib over frameworks.
+- Migrations: Sequential `migrations/001_description.sql`
+- Apply: `go run cmd/migrate/main.go`
 
 ## TypeScript/React (dashboard/)
 
 **Stack**: React 18, TypeScript, Vite, TanStack Query, shadcn/ui, Tailwind CSS
 
-**Critical Patterns**:
-- Imports: use `@/` alias for `src/` paths
-- Components: functional with TypeScript interfaces for props
-- Data fetching: TanStack Query only (no manual fetch)
-- UI: shadcn/ui components in `src/components/ui/`
+### Critical Patterns (REQUIRED)
 
-**Required Component Structure**:
+**Import Paths**: ALWAYS use `@/` alias, NEVER relative paths
+```typescript
+import { getIncidents } from '@/api/incidents'      // ✓ CORRECT
+import { getIncidents } from '../api/incidents'     // ✗ WRONG
+```
+
+**Component Structure**: Typed props interface + named function export
 ```typescript
 interface ComponentProps {
-  prop: Type
+  incidentId: string
+  onUpdate?: () => void
 }
 
-export function Component({ prop }: ComponentProps) {
-  // Logic here
+export function IncidentCard({ incidentId, onUpdate }: ComponentProps) {
+  // Implementation
 }
 ```
 
-**Required Data Fetching**:
+**Data Fetching**: ONLY TanStack Query, NEVER manual fetch() in components
 ```typescript
 const { data, isLoading, error } = useQuery({
-  queryKey: ['resource', params],
-  queryFn: () => apiFunction(params)
+  queryKey: ['incidents', filters],
+  queryFn: () => getIncidents(filters)
 })
 ```
 
-**Testing**:
-- Vitest + React Testing Library for components
-- Property tests: `fast-check`, suffix `*.property.test.ts`
+### Testing
+
+- Vitest + React Testing Library
+- Property: `fast-check`, suffix `*.property.test.ts`, 100+ iterations
 - Naming: `describe('functionName', () => { it('should scenario', ...) })`
 - Colocate: `incidents.ts` → `incidents.test.ts`
 
+### UI
+
+- Use shadcn/ui components from `src/components/ui/`
+
 ## Node.js (remediation-action/, demo-app/)
 
-**Stack**: Node.js 20, TypeScript (action), JavaScript (demo), Express (demo)
+**Stack**: Node.js 20, TypeScript (remediation-action), JavaScript (demo-app), Express (demo-app)
 
-**Action Requirements**:
-- Minimal, focused logic
+### GitHub Action (remediation-action/)
+
+- Minimal logic, single responsibility
 - Use `@actions/core` for inputs/outputs
-- Graceful error handling with clear messages
+- Graceful error handling with actionable messages
+- Export testable functions separately from entrypoint
 
-**Testing**: Jest with `fast-check` for property tests
+### Testing
+
+- Jest with `fast-check` for property tests (100+ iterations)
 
 ## API Conventions
 
-**Endpoints** (incident-service):
+### Existing Endpoints (incident-service)
+
 - `POST /api/v1/webhooks/incidents?provider={provider}` - Webhook ingestion
-- `GET /api/v1/incidents` - List (filter: status, severity, service)
-- `GET /api/v1/incidents/:id` - Details
-- `POST /api/v1/incidents/:id/trigger` - Manual remediation
+- `GET /api/v1/incidents` - List (query: status, severity, service)
+- `GET /api/v1/incidents/:id` - Get details
+- `POST /api/v1/incidents/:id/trigger` - Trigger remediation
 - `POST /api/v1/webhooks/workflow-status` - Status updates
 - `GET /api/v1/health` - Health check
 - `GET /api/v1/metrics` - Prometheus (port 9090)
 
-**Rules**:
-- kebab-case URLs, version prefix `/api/v1/`
-- Proper status codes: 200 (OK), 201 (Created), 400 (Bad Request), 404 (Not Found), 500 (Server Error)
-- Consistent JSON error format
+### URL Conventions (REQUIRED)
+
+- kebab-case paths: `/api/v1/workflow-status` NOT `/api/v1/workflowStatus`
+- Always include `/api/v1/` prefix
+
+### HTTP Status Codes (REQUIRED)
+
+- 200: GET/PUT/PATCH success
+- 201: POST success (created)
+- 400: Validation error
+- 404: Not found
+- 500: Internal error
+
+### Error Response (REQUIRED)
+
+```json
+{
+  "error": "Human-readable message",
+  "code": "ERROR_CODE",
+  "details": {}
+}
+```
 
 ## Configuration
 
-**config.yaml**: Service→repo mappings, MCP servers, `max_concurrent_workflows`, deduplication windows
+### config.yaml (committed, no secrets)
 
-**.env**: Secrets (DB URLs, API keys, tokens). Never commit. Use `.env.example` as template.
+- Service-to-repository mappings
+- MCP server configurations
+- `max_concurrent_workflows`, deduplication windows
 
-**GitHub Secrets**: Set via repository settings UI for Actions credentials
+### .env (NEVER commit)
+
+- Database URLs, API keys, tokens
+- Use `.env.example` as template
+- Load via environment variables
+
+### GitHub Secrets
+
+- Set via Settings → Secrets and variables → Actions
+- Examples: `GITHUB_TOKEN`, `INCIDENT_SERVICE_URL`
 
 ## Testing Standards
 
-**Required Coverage**:
-- Unit tests for all functions
-- Integration tests for end-to-end flows
-- Property tests for invariants (min 100 iterations)
-- >80% code coverage overall
-- 100% coverage for critical paths (webhooks, remediation triggers)
+### Coverage Requirements
 
-**Property Test Files**:
-- Go: `*_property_test.go`
-- TypeScript: `*.property.test.ts`
+- Unit: All public functions/methods
+- Integration: End-to-end flows (webhook → database → GitHub Actions)
+- Property: All invariants, 100+ iterations
+- Overall: >80%, Critical paths: 100% (webhooks, remediation, database)
+
+### Property-Based Testing
+
+Test invariants that hold for all inputs:
+- Go: `gopter`, suffix `*_property_test.go`
+- TypeScript: `fast-check`, suffix `*.property.test.ts`
+- Mark with: `// Property: invariant description`
+- Minimum 100 iterations
+
+### Organization
+
+Always colocate tests with source:
+- Go: `handlers.go` → `handlers_test.go`
+- TypeScript: `incidents.ts` → `incidents.test.ts`
 
 ## Development Commands
 
-**Quick Start**:
+### Quick Start
+
 ```bash
 ./scripts/dev.sh          # Start all services
 ./scripts/test.sh         # Run all tests
 ```
 
-**Service-Specific**:
+### Service-Specific
+
 ```bash
-cd incident-service && go test -v -race ./...  # Go tests
-cd dashboard && npm test                        # Dashboard tests
-cd incident-service && go run cmd/migrate/main.go  # Migrations
+# Go (with race detector)
+cd incident-service && go test -v -race ./...
+
+# Dashboard
+cd dashboard && npm test
+
+# Remediation action
+cd remediation-action && npm test
+
+# Database migrations
+cd incident-service && go run cmd/migrate/main.go
 ```
 
-**Docker**:
+### Docker
+
 ```bash
-docker-compose up                               # Dev mode
-docker-compose -f docker-compose.prod.yml up -d # Production
+docker-compose up                               # Dev
+docker-compose -f docker-compose.prod.yml up -d # Prod
 ```
 
 ## Observability
 
-**Logging**: Structured JSON with `level` (debug/info/warn/error), `timestamp` (ISO 8601), `message`, `context`
+**Logging Format** (REQUIRED):
+```json
+{
+  "level": "info",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "message": "Incident received",
+  "context": {
+    "incident_id": "inc_123",
+    "provider": "datadog"
+  }
+}
+```
+- Levels: debug, info, warn, error
+- Timestamp: ISO 8601 format
+- Never log secrets, tokens, passwords, or PII
 
-**Metrics**: Prometheus on port 9090
-- Counters: `*_total` suffix (e.g., `incidents_received_total`)
-- Histograms: `*_duration_seconds` for latencies
-- Gauges: current state values
+**Metrics** (Prometheus on port 9090):
+- Counters: Use `*_total` suffix (e.g., `incidents_received_total`)
+- Histograms: Use `*_duration_seconds` for latencies
+- Gauges: Current state values (e.g., `active_incidents`)
 
-**Health**: `/api/v1/health` returns 200 when healthy
+**Health Checks**:
+- Endpoint: `GET /api/v1/health`
+- Returns 200 when all dependencies are healthy
 
 ## Security
 
-- Never log secrets (tokens, passwords, PII)
-- Secrets via environment variables only
-- Validate all webhook signatures
-- Rate limiting via Redis
-- Least-privilege GitHub tokens (repo-scoped)
+**Secrets Management** (REQUIRED):
+- NEVER log secrets, tokens, passwords, or PII
+- Store secrets in environment variables only
+- Use `.env` file locally (never commit)
+- Use GitHub repository secrets for Actions
+
+**Webhook Security**:
+- Validate all webhook signatures before processing
+- Implement rate limiting via Redis
+
+**GitHub Tokens**:
+- Use least-privilege, repo-scoped tokens
+- Never use personal access tokens with broad permissions
