@@ -220,10 +220,9 @@ func (r *IncidentRepository) ListWithFilter(filter *IncidentFilter) ([]*models.I
 		if filter.EndTime != nil {
 			query += fmt.Sprintf(" AND created_at <= $%d", argCount)
 			args = append(args, *filter.EndTime)
-			argCount++
+			// argCount++ not needed after last parameter
 		}
 	}
-	_ = argCount // argCount is used for building query parameters
 
 	query += " ORDER BY created_at DESC"
 
@@ -499,10 +498,9 @@ func (r *IncidentRepository) GetStatistics(filter *IncidentFilter) (*IncidentSta
 		if filter.EndTime != nil {
 			query += fmt.Sprintf(" AND created_at <= $%d", argCount)
 			args = append(args, *filter.EndTime)
-			argCount++
+			// argCount++ not needed after last parameter
 		}
 	}
-	_ = argCount // argCount is used for building query parameters
 
 	var stats IncidentStatistics
 	var avgResolutionTime sql.NullFloat64
