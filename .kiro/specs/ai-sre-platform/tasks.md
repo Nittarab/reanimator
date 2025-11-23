@@ -243,7 +243,7 @@
   - Document how to run act tests locally in CONTRIBUTING.md
   - _Requirements: 18.3, Integration Testing_
 
-- [ ] 21. Build Demo Application
+- [x] 21. Build Demo Application
   - Set up Node.js/Express project
   - Create buggy endpoints (division by zero, null pointer, array processing)
   - Integrate Sentry for error reporting
@@ -251,7 +251,7 @@
   - Create in-memory or SQLite database
   - _Requirements: Demo Application_
 
-- [ ] 22. Build Demo UI
+- [x] 22. Build Demo UI
   - Create HTML/CSS/JS interface for triggering errors
   - Implement error trigger buttons for each scenario
   - Implement real-time incident status display
